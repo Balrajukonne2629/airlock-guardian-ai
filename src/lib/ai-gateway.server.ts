@@ -92,7 +92,7 @@ export async function callTool<T>(system: string, user: string, tool: ToolSpec, 
     return (await once(system, user, tool, model)) as T;
   } catch (e) {
     const status = e instanceof AiGatewayError ? e.status : 500;
-    if (status === 429 || status === 402 || status >= 500) {
+    if (status === 429 || status >= 500) {
       await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1500));
       return (await once(system, user, tool, model)) as T;
     }
