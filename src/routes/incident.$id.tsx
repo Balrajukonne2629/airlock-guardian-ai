@@ -31,7 +31,7 @@ export const Route = createFileRoute("/incident/$id")({
       Alert not found. <Link to="/" className="text-airlock">Back to queue</Link>
     </div>
   ),
-  errorComponent: ({ error }) => <div className="tone-hostile mx-auto max-w-7xl border p-4 text-sm">{error.message}</div>,
+  errorComponent: ({ error }) => <div className="tone-hostile mx-auto max-w-7xl border p-4 text-sm">{error instanceof Error ? error.message : "Failed to load"}</div>,
   component: IncidentPage,
 });
 
@@ -140,7 +140,7 @@ function IncidentPage() {
   }
 
   const topStage = out?.chain.reduce((m, s) => ((STAGE_FACTOR[s.stage] ?? 0) > (STAGE_FACTOR[m] ?? 0) ? s.stage : m), "recon" as string) ?? null;
-  const factor = topStage ? STAGE_FACTOR[topStage] : 0;
+  const factor = (topStage ? STAGE_FACTOR[topStage] : 0) ?? 0;
   const likelihood = out?.confidence ?? 0;
   const exposure = Number(asset.asset_value) * likelihood * factor;
 
