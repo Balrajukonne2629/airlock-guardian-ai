@@ -28,6 +28,7 @@ export interface FieldScan {
   verdict: ScanResult["verdict"];
   reason: string;
   matchedRules: string[];
+  layer2Reason?: string;
   cleaned: string;
 }
 
@@ -88,21 +89,21 @@ function normalize(o: TriageOutput): TriageOutput {
 }
 
 /** NAIVE: raw untrusted fields interpolated straight into the prompt, no delimiters. */
-export async function triageNaive(b: AlertBundle): Promise<TriageOutput> {
+export async function triageNaive(b: AlertBundle, model: string = AI_MODEL): Promise<TriageOutput> {
   const body = Object.entries(b.fields).map(([k, v]) => `${k}: ${v}`).join("\n");
-  return normalize(await callTool<TriageOutput>(TASK, `${header(b)}\n${body}`, TOOL));
+  return normalize(await callTool<TriageOutput>(TASK, `${header(b)}\n${body}`, TOOL, model));
 }
 
 /** AIRLOCK: every untrusted field scanned; injections quarantined; rest isolated as quoted evidence. */
-export async function triageAirlock(b: AlertBundle, source = "triage"): Promise<{ output: TriageOutput; scans: FieldScan[] }> {
+export async function triageAirlock(b: AlertBundle, source = "triage", model: string = AI_MODEL): Promise<{ output: TriageOutput; scans: FieldScan[] }> {
   const scans = await Promise.all(
     Object.entries(b.fields).map(async ([field, raw]) => {
-      const r = await scanText(raw, { alertId: source === "triage" ? b.id : null, field, source });
-      return { field, raw, verdict: r.verdict, reason: r.reason, matchedRules: [...new Set(r.matchedRules.map((h) => h.rule))], cleaned: r.cleaned };
+      const r = await scanText(raw, { alertId: source === "triage" ? b.id : null, field, source }, model);
+      return { field, raw, verdict: r.verdict, reason: r.reason, layer2Reason: r.layer2.reason, matchedRules: [...new Set(r.matchedRules.map((h) => h.rule))], cleaned: r.cleaned };
     }),
   );
   const evidence = scans.map((s) => `<quoted_evidence field="${s.field}">\n${s.cleaned}\n</quoted_evidence>`).join("\n");
-  const output = normalize(await callTool<TriageOutput>(TASK + AIRLOCK_RULES, `${header(b)}\n${evidence}`, TOOL));
+  const output = normalize(await callTool<TriageOutput>(TASK + AIRLOCK_RULES, `${header(b)}\n${evidence}`, TOOL, model));
   return { output, scans };
 }
 

@@ -23,6 +23,7 @@ Give a reason of at most 20 words. Respond by calling classify.`;
 export async function scanText(
   text: string,
   log: { alertId?: string | null; field?: string | null; source: string },
+  model: string = AI_MODEL,
 ): Promise<ScanResult> {
   const hits = scanLayer1(text);
   let layer2: ScanResult["layer2"];
@@ -35,7 +36,7 @@ export async function scanText(
         properties: { verdict: { type: "string", enum: ["clean", "suspicious", "injection"] }, reason: { type: "string" } },
         required: ["verdict", "reason"],
       },
-    });
+    }, model);
     if (!["clean", "suspicious", "injection"].includes(layer2.verdict)) throw new Error("bad verdict");
   } catch (e) {
     layer2 = { verdict: "unavailable", reason: `Layer 2 unavailable: ${e instanceof Error ? e.message : "unknown error"}` };
@@ -64,5 +65,5 @@ export async function scanText(
     source: log.source,
   });
 
-  return { verdict, matchedRules: hits, layer2, reason, cleaned, sanitized, model: AI_MODEL };
+  return { verdict, matchedRules: hits, layer2, reason, cleaned, sanitized, model };
 }
