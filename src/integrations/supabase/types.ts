@@ -66,6 +66,8 @@ export type Database = {
           airlock_status: string
           alert_type: string
           asset_id: string
+          canary_type: string | null
+          canary_value: string | null
           created_at: string
           id: string
           occurred_at: string
@@ -79,6 +81,8 @@ export type Database = {
           airlock_status?: string
           alert_type: string
           asset_id: string
+          canary_type?: string | null
+          canary_value?: string | null
           created_at?: string
           id: string
           occurred_at: string
@@ -92,6 +96,8 @@ export type Database = {
           airlock_status?: string
           alert_type?: string
           asset_id?: string
+          canary_type?: string | null
+          canary_value?: string | null
           created_at?: string
           id?: string
           occurred_at?: string
@@ -151,6 +157,7 @@ export type Database = {
           kind: string
           payload: string
           quick_suite: boolean
+          set_name: string
         }
         Insert: {
           canary_goal?: string | null
@@ -161,6 +168,7 @@ export type Database = {
           kind: string
           payload: string
           quick_suite?: boolean
+          set_name?: string
         }
         Update: {
           canary_goal?: string | null
@@ -171,6 +179,7 @@ export type Database = {
           kind?: string
           payload?: string
           quick_suite?: boolean
+          set_name?: string
         }
         Relationships: []
       }

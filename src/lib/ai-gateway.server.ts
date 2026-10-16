@@ -1,5 +1,6 @@
-// Server-only Lovable AI Gateway helper (Responses API, streamed, strict JSON schema).
-export const AI_MODEL = "openai/gpt-6-astra";
+// Server-only Lovable AI Gateway helper: streamed Chat Completions with a forced tool call.
+// One model for every call (classifier, naive triage, airlock triage) so comparisons are fair.
+export const AI_MODEL = "google/gemini-3-flash-preview";
 
 export class AiGatewayError extends Error {
   constructor(public status: number, message: string) {
@@ -7,26 +8,31 @@ export class AiGatewayError extends Error {
   }
 }
 
-async function once(system: string, user: string, schemaName: string, schema: object): Promise<unknown> {
+interface ToolSpec {
+  name: string;
+  description: string;
+  parameters: object;
+}
+
+async function once(system: string, user: string, tool: ToolSpec): Promise<unknown> {
   const key = process.env["LOVABLE_API_KEY"];
   if (!key) throw new AiGatewayError(401, "AI is not configured for this project.");
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Lovable-API-Key": key,
+      Authorization: `Bearer ${key}`,
       "X-Lovable-AIG-SDK": "fetch",
     },
     body: JSON.stringify({
       model: AI_MODEL,
       stream: true,
-      store: false,
-      reasoning: { effort: "low" },
-      input: [
+      messages: [
         { role: "system", content: system },
         { role: "user", content: user },
       ],
-      text: { format: { type: "json_schema", name: schemaName, schema, strict: true } },
+      tools: [{ type: "function", function: tool }],
+      tool_choice: { type: "function", function: { name: tool.name } },
     }),
   });
   if (!res.ok || !res.body) {
@@ -42,7 +48,8 @@ async function once(system: string, user: string, schemaName: string, schema: ob
   const reader = res.body.getReader();
   const dec = new TextDecoder();
   let buf = "";
-  let text = "";
+  let args = "";
+  let content = "";
   for (;;) {
     const { value, done } = await reader.read();
     if (done) break;
@@ -54,29 +61,39 @@ async function once(system: string, user: string, schemaName: string, schema: ob
       if (!line.startsWith("data:")) continue;
       const data = line.slice(5).trim();
       if (!data || data === "[DONE]") continue;
+      let ev: {
+        error?: { message?: string };
+        choices?: { delta?: { content?: string; tool_calls?: { function?: { arguments?: string } }[] } }[];
+      };
       try {
-        const ev = JSON.parse(data) as { type?: string; delta?: string; error?: { message?: string }; response?: { error?: { message?: string } } };
-        if (ev.type === "response.output_text.delta" && ev.delta) text += ev.delta;
-        if (ev.type === "error" || ev.type === "response.failed")
-          throw new AiGatewayError(500, ev.error?.message ?? ev.response?.error?.message ?? "AI stream failed.");
-      } catch (e) {
-        if (e instanceof AiGatewayError) throw e;
+        ev = JSON.parse(data);
+      } catch {
+        continue;
       }
+      if (ev.error) throw new AiGatewayError(500, ev.error.message ?? "AI stream failed.");
+      const d = ev.choices?.[0]?.delta;
+      if (d?.content) content += d.content;
+      for (const tc of d?.tool_calls ?? []) if (tc.function?.arguments) args += tc.function.arguments;
     }
   }
-  if (!text.trim()) throw new AiGatewayError(500, "AI returned an empty response.");
-  return JSON.parse(text);
+  const raw = args.trim() || content.trim().replace(/^```(json)?|```$/g, "");
+  if (!raw) throw new AiGatewayError(500, "AI returned an empty response.");
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new AiGatewayError(500, "AI returned malformed output.");
+  }
 }
 
-/** One bounded retry for 429/5xx, then surface a clear error. */
-export async function callJson<T>(system: string, user: string, schemaName: string, schema: object): Promise<T> {
+/** One bounded retry with backoff for 429/5xx; 402 and other errors surface immediately. */
+export async function callTool<T>(system: string, user: string, tool: ToolSpec): Promise<T> {
   try {
-    return (await once(system, user, schemaName, schema)) as T;
+    return (await once(system, user, tool)) as T;
   } catch (e) {
     const status = e instanceof AiGatewayError ? e.status : 500;
     if (status === 429 || status >= 500) {
-      await new Promise((r) => setTimeout(r, 1500 + Math.random() * 1000));
-      return (await once(system, user, schemaName, schema)) as T;
+      await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1500));
+      return (await once(system, user, tool)) as T;
     }
     throw e;
   }

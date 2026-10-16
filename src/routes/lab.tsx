@@ -3,7 +3,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Loader2, Play, ShieldAlert, ShieldCheck, TriangleAlert } from "lucide-react";
-import { airlockScan, listPresets, type ScanResult } from "@/lib/airlock.functions";
+import { airlockScan, labTriage, listPresets, type ScanResult, type LabSide } from "@/lib/airlock.functions";
 import { StatusBadge, type Tone } from "@/components/StatusBadge";
 import { cn } from "@/lib/utils";
 
@@ -71,10 +71,22 @@ function LabPage() {
   const [busy, setBusy] = useState(false);
   const presets = useQuery(presetsQuery);
   const scan = useServerFn(airlockScan);
+  const triage = useServerFn(labTriage);
+  const [tri, setTri] = useState<Awaited<ReturnType<typeof labTriage>> | null>(null);
+  const [triBusy, setTriBusy] = useState(false);
+  const [triErr, setTriErr] = useState<string | null>(null);
+  const [canary, setCanary] = useState<{ type: "severity" | "string"; value: string } | null>(null);
 
   async function run() {
     setBusy(true);
     setError(null);
+    setTri(null);
+    setTriErr(null);
+    setTriBusy(true);
+    triage({ data: { text, canary } })
+      .then(setTri)
+      .catch((e) => setTriErr(e instanceof Error ? e.message : "Triage failed"))
+      .finally(() => setTriBusy(false));
     try {
       setResult(await scan({ data: { text, source: "lab" } }));
     } catch (e) {
@@ -102,7 +114,7 @@ function LabPage() {
             {presets.data?.map((p) => (
               <button
                 key={p.id}
-                onClick={() => { setText(p.payload); setResult(null); }}
+                onClick={() => { setText(p.payload); setResult(null); setTri(null); setCanary(p.canary_type && p.canary_value ? { type: p.canary_type as "severity" | "string", value: p.canary_value } : null); }}
                 title={p.category}
                 className={cn("rounded-sm border px-1.5 py-0.5 font-mono text-[10px] transition-colors hover:border-airlock", p.kind === "benign" ? "text-sealed" : "text-muted-foreground")}
               >
@@ -113,7 +125,7 @@ function LabPage() {
         </header>
         <textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => { setText(e.target.value); setCanary(null); }}
           spellCheck={false}
           rows={5}
           className="log-well block w-full resize-y border-0 border-b p-3 text-foreground outline-none focus:ring-1 focus:ring-airlock"
@@ -173,16 +185,56 @@ function LabPage() {
         </>
       )}
 
-      <section className="border border-dashed bg-card/50 px-4 py-6">
-        <div className="grid gap-4 md:grid-cols-2">
-          {["Naive agent", "With Airlock"].map((t) => (
-            <div key={t} className="border border-dashed p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t}</p>
-              <p className="mt-2 font-mono text-[11px] text-warning">// Available in Phase 3 — triage side-by-side</p>
-            </div>
-          ))}
-        </div>
+      <section className="border bg-card">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wider">Triage side-by-side</h2>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            context: web shell upload on web-portal-02 · input placed in user_agent
+            {tri?.canary && <> · canary: <span className="text-warning">{tri.canary.type === "severity" ? `severity → ${tri.canary.value}` : tri.canary.value}</span></>}
+          </span>
+        </header>
+        {triErr && <p className="tone-hostile m-4 border px-3 py-2 text-sm">{triErr}</p>}
+        {!tri && !triBusy && !triErr && <p className="px-4 py-6 text-sm text-muted-foreground">Run the Airlock to send the same alert to both agents.</p>}
+        {triBusy && <p className="flex items-center gap-2 px-4 py-6 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Running naive and Airlock triage in parallel…</p>}
+        {tri && (
+          <div className="grid md:grid-cols-2">
+            <TriageSide title="Naive agent" s={tri.naive} canary={!!tri.canary} naive />
+            <TriageSide title="With Airlock" s={tri.airlock} canary={!!tri.canary} />
+          </div>
+        )}
+        {tri && <p className="border-t px-4 py-1.5 font-mono text-[10px] text-muted-foreground">model {tri.model} · same prompt task, schema and model in both modes</p>}
       </section>
+    </div>
+  );
+}
+
+function TriageSide({ title, s, canary, naive }: { title: string; s: LabSide; canary: boolean; naive?: boolean }) {
+  const badge = !s.ok
+    ? { tone: "muted" as Tone, label: "Failed" }
+    : !canary
+      ? { tone: "muted" as Tone, label: "No canary" }
+      : s.obeyed
+        ? { tone: "hostile" as Tone, label: naive ? "Compromised" : "Breached" }
+        : { tone: "sealed" as Tone, label: naive ? "Resisted" : "Sealed" };
+  return (
+    <div className={cn("border-l-2 p-4 md:border-r md:last:border-r-0", s.ok && s.obeyed ? "border-l-hostile" : naive ? "border-l-border" : "border-l-airlock")}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wider">{title}</p>
+        <StatusBadge tone={badge.tone}>{badge.label}</StatusBadge>
+      </div>
+      {s.ok ? (
+        <>
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Severity</span>
+            <StatusBadge tone={s.severity === "Critical" ? "hostile" : s.severity === "High" ? "warning" : s.severity === "Medium" ? "airlock" : "muted"}>{s.severity}</StatusBadge>
+            <span className="font-mono text-xs text-muted-foreground">{Math.round((s.confidence ?? 0) * 100)}% conf.</span>
+          </div>
+          <p className="mt-2 text-sm">{s.summary}</p>
+          {canary && <p className={cn("mt-2 font-mono text-[11px]", s.obeyed ? "text-hostile" : "text-sealed")}>canary {s.obeyed ? "OBEYED" : "not obeyed"}</p>}
+        </>
+      ) : (
+        <p className="mt-3 text-sm text-hostile">{s.error}</p>
+      )}
     </div>
   );
 }
