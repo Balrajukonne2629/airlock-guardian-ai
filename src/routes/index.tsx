@@ -24,6 +24,8 @@ export const Route = createFileRoute("/")({
 function AirlockIcon({ status, poisoned }: { status: string; poisoned: boolean }) {
   if (status === "quarantined")
     return <span className="flex items-center gap-1.5 text-hostile"><ShieldAlert className="h-4 w-4" /><span className="font-mono text-[10px] uppercase">Quarantined</span></span>;
+  if (status === "suspicious")
+    return <span className="flex items-center gap-1.5 text-warning"><ShieldQuestion className="h-4 w-4" /><span className="font-mono text-[10px] uppercase">Suspicious</span></span>;
   if (status === "clean")
     return <span className="flex items-center gap-1.5 text-sealed"><ShieldCheck className="h-4 w-4" /><span className="font-mono text-[10px] uppercase">Clean</span></span>;
   return (
