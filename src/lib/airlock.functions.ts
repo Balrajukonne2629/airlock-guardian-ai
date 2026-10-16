@@ -19,7 +19,7 @@ export const airlockScan = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<ScanResult> => {
     const { scanText } = await import("./airlock.server");
-    return scanText(data.text, { alertId: data.alertId, field: data.field, source: data.source ?? "lab" });
+    return scanText(data.text, { alertId: data.alertId ?? null, field: data.field ?? null, source: data.source ?? "lab" });
   });
 
 export const listPresets = createServerFn({ method: "GET" }).handler(async () => {
