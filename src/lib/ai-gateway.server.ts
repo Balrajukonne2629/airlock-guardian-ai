@@ -1,6 +1,7 @@
 // Server-only Lovable AI Gateway helper: streamed Chat Completions with a forced tool call.
 // One model for every call (classifier, naive triage, airlock triage) so comparisons are fair.
 export const AI_MODEL = "google/gemini-3-flash-preview";
+export const BENCHMARK_MODELS = ["google/gemini-3-flash-preview", "google/gemini-3.1-flash-lite", "google/gemini-3.8-flash"] as const;
 
 export class AiGatewayError extends Error {
   constructor(public status: number, message: string) {
@@ -14,7 +15,7 @@ interface ToolSpec {
   parameters: object;
 }
 
-async function once(system: string, user: string, tool: ToolSpec): Promise<unknown> {
+async function once(system: string, user: string, tool: ToolSpec, model: string): Promise<unknown> {
   const key = process.env["LOVABLE_API_KEY"];
   if (!key) throw new AiGatewayError(401, "AI is not configured for this project.");
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -25,7 +26,7 @@ async function once(system: string, user: string, tool: ToolSpec): Promise<unkno
       "X-Lovable-AIG-SDK": "fetch",
     },
     body: JSON.stringify({
-      model: AI_MODEL,
+      model,
       stream: true,
       messages: [
         { role: "system", content: system },
@@ -86,14 +87,14 @@ async function once(system: string, user: string, tool: ToolSpec): Promise<unkno
 }
 
 /** One bounded retry with backoff for 429/5xx; 402 and other errors surface immediately. */
-export async function callTool<T>(system: string, user: string, tool: ToolSpec): Promise<T> {
+export async function callTool<T>(system: string, user: string, tool: ToolSpec, model: string = AI_MODEL): Promise<T> {
   try {
-    return (await once(system, user, tool)) as T;
+    return (await once(system, user, tool, model)) as T;
   } catch (e) {
     const status = e instanceof AiGatewayError ? e.status : 500;
     if (status === 429 || status >= 500) {
       await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1500));
-      return (await once(system, user, tool)) as T;
+      return (await once(system, user, tool, model)) as T;
     }
     throw e;
   }

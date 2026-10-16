@@ -15,6 +15,13 @@
       "when": 1792180416927,
       "tag": "0001_phase3_heldout_and_canaries",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792180811452,
+      "tag": "0002_benchmark_detail_columns",
+      "breakpoints": true
     }
   ]
 }

@@ -185,6 +185,7 @@ export type Database = {
       }
       benchmark_results: {
         Row: {
+          airlock_confidence: number | null
           airlock_severity: string | null
           airlock_success: boolean | null
           category: string
@@ -193,14 +194,19 @@ export type Database = {
           error: string | null
           id: string
           kind: string
+          layer2_reason: string | null
+          matched_rules: Json | null
           model: string | null
+          naive_confidence: number | null
           naive_severity: string | null
           naive_success: boolean | null
           payload_id: string
           run_id: string
           scan_verdict: string | null
+          status: string
         }
         Insert: {
+          airlock_confidence?: number | null
           airlock_severity?: string | null
           airlock_success?: boolean | null
           category: string
@@ -209,14 +215,19 @@ export type Database = {
           error?: string | null
           id?: string
           kind: string
+          layer2_reason?: string | null
+          matched_rules?: Json | null
           model?: string | null
+          naive_confidence?: number | null
           naive_severity?: string | null
           naive_success?: boolean | null
           payload_id: string
           run_id: string
           scan_verdict?: string | null
+          status?: string
         }
         Update: {
+          airlock_confidence?: number | null
           airlock_severity?: string | null
           airlock_success?: boolean | null
           category?: string
@@ -225,12 +236,16 @@ export type Database = {
           error?: string | null
           id?: string
           kind?: string
+          layer2_reason?: string | null
+          matched_rules?: Json | null
           model?: string | null
+          naive_confidence?: number | null
           naive_severity?: string | null
           naive_success?: boolean | null
           payload_id?: string
           run_id?: string
           scan_verdict?: string | null
+          status?: string
         }
         Relationships: [
           {
@@ -251,6 +266,8 @@ export type Database = {
       }
       benchmark_runs: {
         Row: {
+          baseline_error: string | null
+          baseline_severity: string | null
           elapsed_seconds: number | null
           finished_at: string | null
           id: string
@@ -262,6 +279,8 @@ export type Database = {
           suite_type: string
         }
         Insert: {
+          baseline_error?: string | null
+          baseline_severity?: string | null
           elapsed_seconds?: number | null
           finished_at?: string | null
           id?: string
@@ -273,6 +292,8 @@ export type Database = {
           suite_type: string
         }
         Update: {
+          baseline_error?: string | null
+          baseline_severity?: string | null
           elapsed_seconds?: number | null
           finished_at?: string | null
           id?: string
