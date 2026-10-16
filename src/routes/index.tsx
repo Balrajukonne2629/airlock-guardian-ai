@@ -73,12 +73,12 @@ function AlertsPage() {
                 onClick={() => navigate({ to: "/incident/$id", params: { id: a.id } })}
                 className="cursor-pointer border-b border-l-2 border-l-transparent transition-colors last:border-b-0 hover:border-l-airlock hover:bg-secondary"
               >
-                <td className="px-3 py-2.5 font-mono text-xs text-airlock">{a.id}</td>
-                <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground">
+                <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs text-airlock">{a.id}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs text-muted-foreground">
                   {new Date(a.occurred_at).toISOString().replace("T", " ").slice(0, 19)}
                 </td>
                 <td className="px-3 py-2.5 font-mono text-xs">{a.source_ip}</td>
-                <td className="px-3 py-2.5 font-mono text-xs">{a.asset?.name}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs">{a.asset?.name}</td>
                 <td className="px-3 py-2.5">{a.alert_type}</td>
                 <td className="px-3 py-2.5"><StatusBadge tone={severityTone(a.severity)}>{a.severity}</StatusBadge></td>
                 <td className="px-3 py-2.5 text-xs text-muted-foreground">{a.status}</td>
