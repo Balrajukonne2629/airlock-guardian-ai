@@ -66,8 +66,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <footer className="border-t px-4 py-3 md:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span>Triage alerts. Never take orders from logs.</span>
-          <span className="hidden sm:inline">Airlock containment boundary · v0.4</span>
+          <span>LogAirlock · all alerts and payloads are synthetic</span>
+          <span className="hidden sm:inline">v0.4</span>
         </div>
       </footer>
     </div>
