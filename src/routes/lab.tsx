@@ -35,9 +35,9 @@ const verdictMeta: Record<string, { tone: Tone; label: string; bar: string }> = 
 
 function Panel({ title, step, children, className }: { title: string; step: string; children: React.ReactNode; className?: string }) {
   return (
-    <section className={cn("border border-l-2 bg-card", className)}>
-      <header className="flex items-center justify-between border-b px-4 py-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wider">{title}</h2>
+    <section className={cn("corner-ticks border bg-card", className)}>
+      <header className="flex items-center justify-between border-b px-4 py-2.5">
+        <h2 className="micro-label !text-foreground">{title}</h2>
         <span className="font-mono text-[10px] text-muted-foreground">{step}</span>
       </header>
       <div className="p-4">{children}</div>
@@ -101,10 +101,10 @@ function LabPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-airlock">Lab / Containment</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Airlock Lab</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Paste any untrusted log text. Two layers decide before an agent ever reads it.</p>
+      <div className="border-b pb-5">
+        <p className="micro-label text-airlock">Lab / Containment</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Airlock Lab</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Paste any untrusted log text. Two layers decide before an agent ever reads it.</p>
       </div>
 
       <section className="border bg-card">
