@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Menu, X } from "lucide-react";
 import { useAccess } from "./AccessProvider";
 
 function AirlockMark() {
@@ -23,6 +24,9 @@ const nav = [
 export function AppShell({ children }: { children: ReactNode }) {
   const access = useAccess();
   const presentation = useRouterState({ select: (state) => state.location.pathname === "/presentation" });
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(false), [pathname]);
   if (presentation) return <>{children}</>;
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -33,12 +37,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="text-base font-semibold">LogAirlock</span>
           </Link>
           <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground md:order-last">
-            <Link to="/presentation" search={{ slide: 1, print: false }} className="text-muted-foreground hover:text-airlock">Deck</Link>
+            <Link to="/presentation" search={{ slide: 1, print: false }} className="hidden text-muted-foreground hover:text-airlock md:inline">Deck</Link>
             <span className="hidden lg:inline">Demo Corp</span>
-            <span className="rounded-sm border px-2 py-1">Synthetic data</span>
-            <Link to="/auth" className="text-muted-foreground hover:text-airlock">{access.signedIn ? "Account" : "Sign in"}</Link>
+            <span className="hidden rounded-sm border px-2 py-1 sm:inline">Synthetic data</span>
+            <Link to="/auth" className="flex min-h-11 items-center px-1 text-muted-foreground hover:text-airlock md:min-h-0">{access.signedIn ? "Account" : "Sign in"}</Link>
+            <button type="button" className="grid h-11 w-11 place-items-center text-foreground md:hidden" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} aria-controls="mobile-nav" onClick={() => setOpen((o) => !o)}>
+              {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
+            </button>
           </div>
-          <nav aria-label="Main navigation" className="order-last flex w-full items-stretch justify-between md:order-none md:w-auto md:justify-start md:gap-6">
+          <nav aria-label="Main navigation" id="mobile-nav" className={`${open ? "flex" : "hidden"} order-last w-full flex-col pb-2 md:order-none md:flex md:w-auto md:flex-row md:items-stretch md:gap-6 md:pb-0`}>
             {nav.map(({ to, label }) => (
               <Link
                 key={to}
@@ -50,6 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {label}
               </Link>
             ))}
+            <Link to="/presentation" search={{ slide: 1, print: false }} className="flex h-12 items-center border-b-2 border-transparent px-1 text-sm font-medium text-muted-foreground hover:text-foreground md:hidden">Deck</Link>
           </nav>
         </div>
       </header>
