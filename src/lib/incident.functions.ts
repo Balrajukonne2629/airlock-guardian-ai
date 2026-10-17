@@ -68,7 +68,8 @@ export const runTriage = createServerFn({ method: "POST" })
     );
     if (saveError) throw new Error("Triage could not be saved.");
     if (scans) {
-      const status = scans.some((s) => s.verdict === "injection") ? "quarantined" : scans.some((s) => s.verdict === "suspicious") ? "suspicious" : "clean";
+      const { alertAirlockStatus } = await import("./alert-status");
+      const status = alertAirlockStatus(scans.map((s) => s.verdict));
       await supabaseAdmin.from("alerts").update({ airlock_status: status }).eq("id", alert.id);
     }
     await refreshDemo();

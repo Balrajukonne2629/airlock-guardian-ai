@@ -2,7 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { formatIST } from "@/lib/format";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { ShieldAlert, ShieldCheck, ShieldQuestion } from "lucide-react";
+import { ShieldAlert, ShieldCheck, ShieldQuestion, TriangleAlert } from "lucide-react";
 import { listAlerts } from "@/lib/alerts.functions";
 import { StatusBadge, severityTone } from "@/components/StatusBadge";
 
@@ -26,6 +26,8 @@ export const Route = createFileRoute("/")({
 function AirlockIcon({ status, poisoned }: { status: string; poisoned: boolean }) {
   if (status === "quarantined")
     return <span className="flex items-center gap-1.5 text-hostile"><ShieldAlert className="h-3.5 w-3.5" /><span className="font-mono text-[10px] uppercase tracking-wider">Quarantined</span></span>;
+  if (status === "unverified")
+    return <span className="flex items-center gap-1.5 text-warning" title="AI check unavailable — not counted as clean"><TriangleAlert className="h-3.5 w-3.5" /><span className="font-mono text-[10px] uppercase tracking-wider">Unverified</span></span>;
   if (status === "suspicious")
     return <span className="flex items-center gap-1.5 text-warning"><ShieldQuestion className="h-3.5 w-3.5" /><span className="font-mono text-[10px] uppercase tracking-wider">Suspicious</span></span>;
   if (status === "clean")
