@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { formatIST } from "@/lib/format";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -66,7 +67,7 @@ function Card({ title, aside, children, className }: { title: string; aside?: Re
   return (
     <section className={cn("border border-l-2 bg-card", className)}>
       <header className="flex items-center justify-between gap-2 border-b px-4 py-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wider">{title}</h2>
+        <h2 className="text-sm font-semibold">{title}</h2>
         {aside}
       </header>
       <div className="p-4">{children}</div>
@@ -156,53 +157,53 @@ function IncidentPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4">
+    <div className="mx-auto max-w-7xl space-y-6">
       <Link to="/" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-airlock">
         <ArrowLeft className="h-3 w-3" /> Alert queue
       </Link>
 
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4 border bg-card p-4">
+      <div className="flex flex-wrap items-start justify-between gap-6 border-b pb-6">
         <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-airlock">Incident / {alert.id}</p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">{alert.alert_type} on {asset.name}</h1>
+          <p className="font-mono text-xs tracking-[0.2em] text-airlock">Incident / {alert.id}</p>
+          <h1 className="mt-1 text-xl font-semibold tracking-normal">{alert.alert_type} on {asset.name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className="font-mono">{alert.source_ip}</span>·<span className="font-mono">{formatIST(alert.occurred_at)}</span>·
             <span>Status: {inc?.status === "Approved" ? "Approved" : alert.status}</span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {out && (
               <>
                 <StatusBadge tone={severityTone(out.severity)}>{out.severity}</StatusBadge>
                 <span className="font-mono text-sm">{Math.round(out.confidence * 100)}% <span className="text-muted-foreground">conf.</span></span>
               </>
             )}
-            <button onClick={doRun} disabled={busy} className="inline-flex items-center gap-2 rounded-sm bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
+            <Button onClick={doRun} disabled={busy} className="inline-flex items-center gap-2 rounded-sm bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               {busy ? "Triaging both modes…" : inc ? "Re-run Triage" : "Run Triage"}
-            </button>
+            </Button>
           </div>
           {/* segmented switch */}
-          <div className="inline-flex border" role="tablist">
+          <div className="inline-flex max-w-full flex-wrap border" role="tablist">
             {(["airlock", "naive"] as const).map((m) => {
               const b = modeBadge(m);
               return (
-                <button
+                <Button
                   key={m}
                   role="tab"
                   aria-selected={mode === m}
                   onClick={() => setMode(m)}
                   className={cn(
                     "flex items-center gap-2 border-r px-3 py-1.5 text-xs font-medium last:border-r-0",
-                    mode === m ? (m === "airlock" ? "bg-secondary text-airlock" : "bg-secondary text-hostile") : "text-muted-foreground hover:text-foreground",
+                    mode === m ? "bg-secondary text-airlock" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {m === "airlock" ? <ShieldCheck className="h-3.5 w-3.5" /> : <ShieldAlert className="h-3.5 w-3.5" />}
                   {m === "airlock" ? "Airlock Protected" : "Naive Agent"}
                   {b && <StatusBadge tone={b.tone}>{b.label}</StatusBadge>}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -223,9 +224,9 @@ function IncidentPage() {
 
       {inc && (
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
+          <div className="space-y-6 lg:col-span-2">
             {/* Airlock field panel */}
-            <Card title="Airlock · untrusted fields" aside={<span className="font-mono text-[10px] text-muted-foreground">{inc.scan_summary?.length ?? 0} scanned · {quarantined.length} quarantined</span>} className={quarantined.length ? "border-l-hostile" : "border-l-sealed"}>
+            <Card title="Airlock · untrusted fields" aside={<span className="text-xs text-muted-foreground">{inc.scan_summary?.length ?? 0} scanned · {quarantined.length} quarantined</span>} className={quarantined.length ? "border-l-hostile" : "border-l-sealed"}>
               <ul className="divide-y">
                 {(inc.scan_summary ?? []).map((s) => (
                   <li key={s.field} className="py-2 first:pt-0 last:pb-0">
@@ -249,13 +250,13 @@ function IncidentPage() {
 
             {out && (
               <>
-                <Card title="Attack chain" aside={<span className="font-mono text-[10px] text-muted-foreground">{mode === "airlock" ? "airlock output" : "naive output"}</span>} className={mode === "airlock" ? "border-l-airlock" : "border-l-hostile"}>
+                <Card title="Attack chain" aside={<span className="text-xs text-muted-foreground">{mode === "airlock" ? "airlock output" : "naive output"}</span>} className={mode === "airlock" ? "border-l-airlock" : "border-l-hostile"}>
                   <ol className="relative ml-2 border-l">
                     {out.chain.map((s, i) => (
                       <li key={i} className="relative pb-4 pl-5 last:pb-0">
                         <span className="absolute -left-[5px] top-1.5 h-2 w-2 bg-airlock" />
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-[10px] uppercase text-muted-foreground">{String(i + 1).padStart(2, "0")} · {STAGE_LABEL[s.stage] ?? s.stage}</span>
+                          <span className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")} · {STAGE_LABEL[s.stage] ?? s.stage}</span>
                           <span className="text-sm font-medium">{s.title}</span>
                         </div>
                         <p className="mt-0.5 text-sm text-muted-foreground">{s.detail}</p>
@@ -274,7 +275,7 @@ function IncidentPage() {
                 <Card
                   title="Response playbook"
                   className="border-l-airlock"
-                  aside={inc.status === "Approved" ? <StatusBadge tone="sealed">Approved</StatusBadge> : <span className="text-[10px] uppercase text-muted-foreground">human-in-the-loop</span>}
+                  aside={inc.status === "Approved" ? <StatusBadge tone="sealed">Approved</StatusBadge> : <span className="text-xs text-muted-foreground">human-in-the-loop</span>}
                 >
                   <ul className="space-y-1.5">
                     {out.playbook.map((p, i) => (
@@ -286,7 +287,7 @@ function IncidentPage() {
                       </li>
                     ))}
                   </ul>
-                  <button
+                  <Button
                     onClick={doApprove}
                     disabled={inc.status === "Approved" || mode === "naive"}
                     title={mode === "naive" ? "Switch to Airlock Protected to approve" : undefined}
@@ -294,15 +295,15 @@ function IncidentPage() {
                   >
                     <CheckCircle2 className="h-4 w-4" />
                     {inc.status === "Approved" ? `Approved ${inc.approved_at ? formatIST(inc.approved_at) : ""}` : "Approve & Execute"}
-                  </button>
+                  </Button>
                 </Card>
               </>
             )}
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             {out && (
-              <Card title="₹ Exposure" aside={<span className="text-[10px] uppercase text-warning">illustrative estimate</span>} className="border-l-warning">
+              <Card title="₹ Exposure" aside={<span className="text-xs text-warning">illustrative estimate</span>} className="border-l-warning">
                 <p className="font-mono text-2xl font-semibold text-warning">{inr(exposure)}</p>
                 <p className="mt-2 font-mono text-[11px] text-muted-foreground">Exposure ₹ = Asset Value × Likelihood × Stage Factor</p>
                 <dl className="mt-3 divide-y border font-mono text-xs">
@@ -312,14 +313,14 @@ function IncidentPage() {
                       {editing ? (
                         <>
                           <input autoFocus value={assetDraft} onChange={(e) => setAssetDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && doSaveAsset()} className="log-well w-28 px-1 py-0.5 text-right" />
-                          <button onClick={doSaveAsset} className="text-airlock">save</button>
+                          <Button onClick={doSaveAsset} className="text-airlock">save</Button>
                         </>
                       ) : (
                         <>
                           {inr(Number(asset.asset_value))}
-                          <button onClick={() => { setAssetDraft(String(asset.asset_value)); setEditing(true); }} aria-label="Edit asset value" className="text-muted-foreground hover:text-airlock">
+                          <Button onClick={() => { setAssetDraft(String(asset.asset_value)); setEditing(true); }} aria-label="Edit asset value" className="text-muted-foreground hover:text-airlock">
                             <Pencil className="h-3 w-3" />
-                          </button>
+                          </Button>
                         </>
                       )}
                     </dd>
@@ -358,7 +359,7 @@ function IncidentPage() {
                 ) : (
                   <p className="text-xs text-muted-foreground">No injected payload in this alert; nothing to judge.</p>
                 )}
-                <p className="mt-2 font-mono text-[10px] text-muted-foreground">model {inc.model}</p>
+                <p className="mt-2 text-xs text-muted-foreground">model {inc.model}</p>
               </Card>
             )}
           </div>
