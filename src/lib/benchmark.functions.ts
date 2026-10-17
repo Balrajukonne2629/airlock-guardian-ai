@@ -130,7 +130,7 @@ export const finalizeRun = createServerFn({ method: "POST" })
 
 export const listRuns = createServerFn({ method: "GET" }).handler(async () => {
   const { publicClient } = await import("./supabase-public.server");
-  const { data, error } = await publicClient()
+  const { data, error } = await (await publicClient())
     .from("benchmark_runs")
     .select("id, suite_type, sample_size, model, status, started_at, elapsed_seconds, baseline_severity")
     .in("status", ["complete", "aborted"])
@@ -144,7 +144,7 @@ export const getRunResults = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ runId: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const { publicClient } = await import("./supabase-public.server");
-    const sb = publicClient();
+    const sb = await publicClient();
     const [{ data: run }, { data: results }] = await Promise.all([
       sb.from("benchmark_runs").select("*").eq("id", data.runId).single(),
       sb.from("benchmark_results").select("kind, category, status, scan_verdict, naive_success, airlock_success, naive_severity, airlock_severity, error").eq("run_id", data.runId),
