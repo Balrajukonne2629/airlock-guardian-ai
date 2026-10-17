@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Activity, FlaskConical, ListChecks } from "lucide-react";
+import { Activity, FlaskConical, ListChecks, PanelsTopLeft } from "lucide-react";
 import type { ReactNode } from "react";
 
 function AirlockMark() {
@@ -14,6 +14,7 @@ function AirlockMark() {
 }
 
 const nav = [
+  { to: "/overview", label: "Overview", icon: PanelsTopLeft },
   { to: "/", label: "Alerts", icon: ListChecks },
   { to: "/lab", label: "Airlock Lab", icon: FlaskConical },
   { to: "/benchmark", label: "Benchmark", icon: Activity },
@@ -48,12 +49,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background px-4 md:px-6">
-          <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-10 flex min-h-14 flex-wrap items-center justify-between gap-2 border-b bg-background px-4 py-2 md:px-6">
+          <div className="flex min-w-0 items-center gap-2">
             <div className="flex items-center gap-2 md:hidden">
               <AirlockMark />
             </div>
-            <nav className="flex gap-3 md:hidden">
+            <nav className="flex flex-wrap gap-x-3 gap-y-2 md:hidden">
               {nav.map(({ to, label }) => (
                 <Link key={to} to={to} activeOptions={{ exact: to === "/" }} className="text-xs text-muted-foreground" activeProps={{ className: "!text-airlock" }}>
                   {label}
