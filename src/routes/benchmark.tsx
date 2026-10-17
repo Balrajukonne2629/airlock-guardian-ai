@@ -124,9 +124,9 @@ function BenchmarkPage() {
     <div className="mx-auto max-w-7xl space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-airlock">Proof / Measured</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Benchmark</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Every number below is read from stored run results. Nothing is precomputed.</p>
+          <p className="micro-label text-airlock">Proof / Measured</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Benchmark</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Every number below is read from stored run results. Nothing is precomputed.</p>
         </div>
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
           Benchmark model
