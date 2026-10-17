@@ -130,7 +130,7 @@ export const finalizeRun = createServerFn({ method: "POST" })
 
 export const listRuns = createServerFn({ method: "GET" }).handler(async () => {
   const { publicClient } = await import("./supabase-public.server");
-  const { data, error } = (await publicClient())
+  const { data, error } = await (await publicClient())
     .from("benchmark_runs")
     .select("id, suite_type, sample_size, model, status, started_at, elapsed_seconds, baseline_severity")
     .in("status", ["complete", "aborted"])
