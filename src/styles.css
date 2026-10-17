@@ -163,3 +163,42 @@
   h1, h2, h3, th, nav, button { letter-spacing: 0; }
   main { min-width: 0; }
 }
+
+/* Fixed-format presentation master; palette inherits the analyst workspace. */
+:root {
+  --slide-background: var(--background);
+  --slide-foreground: var(--foreground);
+  --slide-accent: var(--airlock);
+  --slide-title-lg: 150px;
+  --slide-title: 80px;
+  --slide-subtitle: 48px;
+  --slide-body-lg: 40px;
+  --slide-body: 32px;
+  --slide-caption: 24px;
+}
+.deck-page { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: var(--well); }
+.deck-canvas { position: relative; overflow: hidden; width: 100%; height: 100%; }
+.deck-scaled { position: absolute; width: 1920px; height: 1080px; left: 50%; top: 50%; margin-left: -960px; margin-top: -540px; transform-origin: center; }
+.slide-content { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--slide-background); color: var(--slide-foreground); letter-spacing: 0; }
+.deck-slide-header, .deck-slide-footer { position: absolute; left: 100px; right: 100px; display: flex; justify-content: space-between; font-size: 22px; color: var(--muted-foreground); }
+.deck-slide-header { top: 48px; }
+.deck-slide-footer { bottom: 42px; }
+.deck-slide-body { position: absolute; inset: 140px 100px 100px; }
+.slide-title-lg { font-size: var(--slide-title-lg); font-weight: 600; line-height: 1.05; }
+.slide-title { font-size: var(--slide-title); font-weight: 600; line-height: 1.1; }
+.slide-subtitle { font-size: var(--slide-subtitle); font-weight: 500; line-height: 1.18; }
+.slide-body-lg { font-size: var(--slide-body-lg); line-height: 1.3; }
+.slide-body { font-size: var(--slide-body); line-height: 1.4; }
+.slide-caption { font-size: var(--slide-caption); line-height: 1.4; }
+.deck-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--background); }
+.deck-stage { min-height: 0; flex: 1; padding: 24px; }
+.deck-presenting .deck-stage { padding: 0; }
+.deck-presenting .deck-toolbar, .deck-presenting .deck-bottom { display: none; }
+.deck-print .slide-content { break-after: page; page-break-after: always; }
+@media (max-width: 640px) { .deck-stage { padding: 0; } .deck-toolbar { padding: 10px 12px; } }
+@media print {
+  @page { size: 1920px 1080px; margin: 0; }
+  html, body { margin: 0; padding: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .deck-print-toolbar, [data-sonner-toaster] { display: none !important; }
+  .deck-print { width: 1920px; }
+}
