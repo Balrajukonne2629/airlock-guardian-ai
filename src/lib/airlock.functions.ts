@@ -5,7 +5,7 @@ import type { Verdict, RuleHit } from "./airlock-rules";
 import { judgeCanary, inferCanary, type Canary } from "./canary";
 
 export interface ScanResult {
-  verdict: Verdict;
+  verdict: Verdict | "unverified";
   matchedRules: RuleHit[];
   layer2: { verdict: Verdict | "unavailable"; reason: string };
   reason: string;

@@ -34,6 +34,7 @@ const verdictMeta: Record<string, { tone: Tone; label: string; bar: string }> = 
   injection: { tone: "hostile", label: "Quarantined", bar: "border-l-hostile" },
   suspicious: { tone: "warning", label: "Suspicious", bar: "border-l-warning" },
   clean: { tone: "sealed", label: "Sealed · Clean", bar: "border-l-sealed" },
+  unverified: { tone: "warning", label: "Unverified: AI check unavailable", bar: "border-l-warning" },
   unavailable: { tone: "muted", label: "Unavailable", bar: "border-l-muted-foreground" },
 };
 
@@ -157,7 +158,7 @@ function LabPage() {
       {result && final && l2 && (
         <>
           <div className={cn("flex flex-wrap items-center gap-3 border border-l-2 bg-card px-4 py-3", final.bar)}>
-            {result.verdict === "injection" ? <ShieldAlert className="h-5 w-5 text-hostile" /> : result.verdict === "suspicious" ? <TriangleAlert className="h-5 w-5 text-warning" /> : <ShieldCheck className="h-5 w-5 text-sealed" />}
+            {result.verdict === "injection" ? <ShieldAlert className="h-5 w-5 text-hostile" /> : result.verdict === "suspicious" || result.verdict === "unverified" ? <TriangleAlert className="h-5 w-5 text-warning" /> : <ShieldCheck className="h-5 w-5 text-sealed" />}
             <span className="text-sm font-semibold">Final verdict</span>
             <StatusBadge tone={final.tone}>{final.label}</StatusBadge>
             <span className="ml-auto text-xs text-muted-foreground">model {result.model}</span>

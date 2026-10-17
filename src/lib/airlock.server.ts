@@ -1,8 +1,10 @@
-import { scanLayer1, combineVerdict, quarantine, wrapEvidence, type Verdict, type RuleHit } from "./airlock-rules";
+import { scanLayer1, combineVerdict, quarantine, wrapEvidence, type Verdict, type ScanVerdict, type RuleHit } from "./airlock-rules";
 import { callTool, AI_MODEL } from "./ai-gateway.server";
 
+export const LAYER2_TIMEOUT_MS = 25_000;
+
 export interface ScanResult {
-  verdict: Verdict;
+  verdict: ScanVerdict;
   matchedRules: RuleHit[];
   layer2: { verdict: Verdict | "unavailable"; reason: string };
   reason: string;
@@ -28,7 +30,9 @@ export async function scanText(
   const hits = scanLayer1(text);
   let layer2: ScanResult["layer2"];
   try {
-    layer2 = await callTool<{ verdict: Verdict; reason: string }>(CLASSIFIER_SYSTEM, wrapEvidence(text), {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, rej) => { timer = setTimeout(() => rej(new Error("timed out")), LAYER2_TIMEOUT_MS); });
+    layer2 = await Promise.race([timeout, callTool<{ verdict: Verdict; reason: string }>(CLASSIFIER_SYSTEM, wrapEvidence(text), {
       name: "classify",
       description: "Return the injection classification for the quoted evidence.",
       parameters: {
@@ -36,7 +40,7 @@ export async function scanText(
         properties: { verdict: { type: "string", enum: ["clean", "suspicious", "injection"] }, reason: { type: "string" } },
         required: ["verdict", "reason"],
       },
-    }, model);
+    }, model)]).finally(() => clearTimeout(timer));
     if (!["clean", "suspicious", "injection"].includes(layer2.verdict)) throw new Error("bad verdict");
   } catch (e) {
     layer2 = { verdict: "unavailable", reason: `Layer 2 unavailable: ${e instanceof Error ? e.message : "unknown error"}` };

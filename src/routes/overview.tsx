@@ -66,7 +66,7 @@ function ProofPanel({ title, proof }: { title: string; proof: ReturnType<typeof 
             <div><dt className="inline">Sample size: </dt><dd className="inline text-foreground">{proof.run.sample_size}</dd></div>
             <div><dt className="inline">Timestamp: </dt><dd className="inline text-foreground"><time dateTime={proof.run.started_at}>{formatIST(proof.run.started_at)}</time></dd></div>
           </dl>
-          <p className="mt-3 text-[11px] text-muted-foreground">{proof.processed} processed · {proof.metrics.errored} errored; errors excluded from rates. Flagged = injection or suspicious.</p>
+          <p className="mt-3 text-[11px] text-muted-foreground">{proof.processed} processed · {proof.metrics.errored} errored · {proof.metrics.unverified ?? 0} unverified; both excluded from rates, never counted as clean. Flagged = injection or suspicious.</p>
           {proof.run.status !== "complete" && <p className="mt-2 text-xs text-warning">Partial run; these are only the stored results so far.</p>}
         </div>
       )}

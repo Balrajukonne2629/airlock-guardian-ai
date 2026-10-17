@@ -141,8 +141,12 @@ export function quarantine(text: string, hits: RuleHit[]): string {
 
 export type Verdict = "clean" | "suspicious" | "injection";
 
-export function combineVerdict(hits: RuleHit[], layer2: Verdict | "unavailable"): Verdict {
+/** Final scan verdict; "unverified" = Layer 2 unavailable and Layer 1 found nothing. Never treated as clean. */
+export type ScanVerdict = Verdict | "unverified";
+
+export function combineVerdict(hits: RuleHit[], layer2: Verdict | "unavailable"): ScanVerdict {
   if (hits.some((h) => h.strength === "high") || layer2 === "injection") return "injection";
+  if (layer2 === "unavailable" && hits.length === 0) return "unverified";
   if (hits.length > 0 || layer2 === "suspicious") return "suspicious";
   return "clean";
 }
