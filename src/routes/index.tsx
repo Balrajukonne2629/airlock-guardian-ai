@@ -1,3 +1,5 @@
+import { ChevronRight } from "lucide-react";
+import { formatIST } from "@/lib/format";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { ShieldAlert, ShieldCheck, ShieldQuestion } from "lucide-react";
@@ -77,7 +79,7 @@ function AlertsPage() {
         <table className="w-full min-w-[900px] border-collapse text-sm">
           <thead>
             <tr className="border-b text-left">
-              {["ID", "Timestamp (UTC)", "Source IP", "Asset", "Alert type", "Severity", "Status", "Airlock"].map((h) => (
+              {["ID", "Timestamp", "Source IP", "Asset", "Alert type", "Severity", "Status", "Airlock", ""].map((h) => (
                 <th key={h} className="micro-label px-3 py-2 font-normal">{h}</th>
               ))}
             </tr>
@@ -87,14 +89,14 @@ function AlertsPage() {
               <tr
                 key={a.id}
                 onClick={() => navigate({ to: "/incident/$id", params: { id: a.id } })}
-                className="group cursor-pointer border-b transition-colors last:border-b-0 hover:bg-secondary/60"
+                className="group cursor-pointer border-b transition-colors last:border-b-0 hover:bg-secondary"
               >
                 <td className="whitespace-nowrap px-3 py-3 font-mono text-xs">
                   <span className="mr-2 inline-block h-1.5 w-1.5 bg-airlock opacity-0 transition-opacity group-hover:opacity-100" />
                   <span className="text-airlock">{a.id}</span>
                 </td>
                 <td className="whitespace-nowrap px-3 py-3 font-mono text-xs tabular-nums text-muted-foreground">
-                  {new Date(a.occurred_at).toISOString().replace("T", " ").slice(0, 19)}
+                  {formatIST(a.occurred_at)}
                 </td>
                 <td className="px-3 py-3 font-mono text-xs tabular-nums">{a.source_ip}</td>
                 <td className="whitespace-nowrap px-3 py-3 font-mono text-xs">{a.asset?.name}</td>
@@ -102,6 +104,7 @@ function AlertsPage() {
                 <td className="px-3 py-3"><StatusBadge tone={severityTone(a.severity)}>{a.severity}</StatusBadge></td>
                 <td className="px-3 py-3 text-xs text-muted-foreground">{a.status}</td>
                 <td className="px-3 py-3"><AirlockIcon status={a.airlock_status} poisoned={a.poisoned} /></td>
+                <td className="w-8 px-2 py-3 text-muted-foreground transition-colors group-hover:text-airlock"><ChevronRight className="h-4 w-4" aria-hidden /></td>
               </tr>
             ))}
           </tbody>

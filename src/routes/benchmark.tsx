@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { BENCHMARK_MODEL_OPTIONS, finalizeRun, getRunResults, listRuns, runBatch, startRun, type Suite } from "@/lib/benchmark.functions";
 import { computeMetrics, describe, pct, type Ratio, type Metrics } from "@/lib/metrics";
 import { cn } from "@/lib/utils";
+import { formatIST, outcomeTone, type OutcomeKind } from "@/lib/format";
 
 const runsQuery = queryOptions({ queryKey: ["runs"], queryFn: () => listRuns() });
 const resultsQuery = (id: string) => queryOptions({ queryKey: ["run", id], queryFn: () => getRunResults({ data: { runId: id } }) });
@@ -30,11 +31,12 @@ export const Route = createFileRoute("/benchmark")({
 const SUITE_LABEL: Record<string, string> = { quick: "Quick Suite", full: "Full Suite", heldout: "Held-out Suite" };
 const SUITE_N: Record<Suite, number> = { quick: 24, full: 80, heldout: 15 };
 
-function R({ r, tone }: { r: Ratio; tone?: "hostile" | "sealed" | "airlock" }) {
+function R({ r, kind }: { r: Ratio; kind?: OutcomeKind }) {
   const p = pct(r);
+  const tone = kind ? outcomeTone(kind, p) : null;
   return (
     <span className="font-mono text-xs">
-      <span className={cn(tone === "hostile" && "text-hostile", tone === "sealed" && "text-sealed", tone === "airlock" && "text-airlock")}>{p === null ? "—" : `${p}%`}</span>{" "}
+      <span className={cn(tone === "hostile" && "text-hostile", tone === "sealed" && "text-sealed", tone === "warning" && "text-warning")}>{p === null ? "—" : `${p}%`}</span>{" "}
       <span className="text-muted-foreground">({r.n} / {r.d})</span>
     </span>
   );
@@ -49,7 +51,7 @@ function useRunMetrics(id: string | undefined) {
 function RunMeta({ run, m }: { run: { suite_type: string; sample_size: number; model: string; started_at: string; elapsed_seconds: number | null; status: string }; m: Metrics }) {
   return (
     <span className="font-mono text-[10px] text-muted-foreground">
-      {SUITE_LABEL[run.suite_type]} · n={m.overall.payloads} attacks + {m.benign.total} benign · {run.model} · {new Date(run.started_at).toLocaleString()} · {run.elapsed_seconds ?? "—"}s ·{" "}
+      {SUITE_LABEL[run.suite_type]} · n={m.overall.payloads} attacks + {m.benign.total} benign · {run.model} · {formatIST(run.started_at)} · {run.elapsed_seconds ?? "—"}s ·{" "}
       <span className={m.errored ? "text-warning" : ""}>{m.errored} errored</span>
       {run.status === "aborted" && <span className="text-warning"> · stopped early</span>}
     </span>
@@ -69,8 +71,8 @@ function BenchmarkPage() {
   const [now, setNow] = useState(0);
   const stopRef = useRef(false);
 
-  const mainRuns = runs.filter((r) => r.suite_type !== "heldout");
-  const heldRuns = runs.filter((r) => r.suite_type === "heldout");
+  const mainRuns = runs.filter((r: (typeof runs)[number]) => r.suite_type !== "heldout");
+  const heldRuns = runs.filter((r: (typeof runs)[number]) => r.suite_type === "heldout");
   const selectedId = selected ?? mainRuns[0]?.id;
   const heldId = heldRuns[0]?.id;
   const main = useRunMetrics(selectedId);
@@ -183,7 +185,7 @@ function BenchmarkPage() {
                 <RunMeta run={main.run} m={m} />
                 {mainRuns.length > 1 && (
                   <select value={selectedId} onChange={(e) => setSelected(e.target.value)} className="log-well rounded-sm px-1.5 py-0.5 text-[10px] text-foreground">
-                    {mainRuns.map((r) => <option key={r.id} value={r.id}>{SUITE_LABEL[r.suite_type]} · {new Date(r.started_at).toLocaleString()}</option>)}
+                    {mainRuns.map((r: (typeof runs)[number]) => <option key={r.id} value={r.id}>{SUITE_LABEL[r.suite_type]} · {formatIST(r.started_at)}</option>)}
                   </select>
                 )}
               </div>
@@ -192,7 +194,7 @@ function BenchmarkPage() {
               <table className="w-full min-w-[760px] text-sm">
                 <thead>
                   <tr className="border-b text-left text-[10px] uppercase tracking-wider text-muted-foreground">
-                    {["Category", "Payloads", "ASR · Naive", "ASR · Airlock", "Detected (inj + susp)", "Injection / Suspicious"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}
+                    {["Category", "Payloads", "Attack success · Naive", "Attack success · Airlock", "Detected (injection + suspicious)", "Injection / Suspicious"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -200,25 +202,25 @@ function BenchmarkPage() {
                     <tr key={c.category} className="border-b">
                       <td className="px-3 py-2">{c.category}</td>
                       <td className="px-3 py-2 font-mono text-xs">{c.payloads}{c.errored ? <span className="text-warning"> ({c.errored} err)</span> : null}</td>
-                      <td className="px-3 py-2"><R r={c.asrNaive} tone="hostile" /></td>
-                      <td className="px-3 py-2"><R r={c.asrAirlock} tone="sealed" /></td>
-                      <td className="px-3 py-2"><R r={c.detected} tone="airlock" /></td>
+                      <td className="px-3 py-2"><R r={c.asrNaive} kind="asr" /></td>
+                      <td className="px-3 py-2"><R r={c.asrAirlock} kind="asr" /></td>
+                      <td className="px-3 py-2"><R r={c.detected} kind="det" /></td>
                       <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{c.detInjection.n} / {c.detSuspicious.n}</td>
                     </tr>
                   ))}
                   <tr className="border-b border-l-2 border-l-airlock bg-secondary font-semibold">
                     <td className="px-3 py-2">All seeded attacks</td>
                     <td className="px-3 py-2 font-mono text-xs">{m.overall.payloads}</td>
-                    <td className="px-3 py-2"><R r={m.overall.asrNaive} tone="hostile" /></td>
-                    <td className="px-3 py-2"><R r={m.overall.asrAirlock} tone="sealed" /></td>
-                    <td className="px-3 py-2"><R r={m.overall.detected} tone="airlock" /></td>
+                    <td className="px-3 py-2"><R r={m.overall.asrNaive} kind="asr" /></td>
+                    <td className="px-3 py-2"><R r={m.overall.asrAirlock} kind="asr" /></td>
+                    <td className="px-3 py-2"><R r={m.overall.detected} kind="det" /></td>
                     <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{m.overall.detInjection.n} / {m.overall.detSuspicious.n}</td>
                   </tr>
                   <tr className="border-b">
                     <td className="px-3 py-2">False-positive rate (benign)</td>
                     <td className="px-3 py-2 font-mono text-xs">{m.benign.total}{m.benign.errored ? <span className="text-warning"> ({m.benign.errored} err)</span> : null}</td>
                     <td className="px-3 py-2 text-xs text-muted-foreground" colSpan={2}>scan only, no triage</td>
-                    <td className="px-3 py-2"><R r={m.benign.fp} tone="hostile" /></td>
+                    <td className="px-3 py-2"><R r={m.benign.fp} kind="fp" /></td>
                     <td />
                   </tr>
                   {held.metrics && held.run && (
@@ -228,10 +230,10 @@ function BenchmarkPage() {
                         <div><RunMeta run={held.run} m={held.metrics} /></div>
                       </td>
                       <td className="px-3 py-2 font-mono text-xs">{held.metrics.overall.payloads} + {held.metrics.benign.total} benign</td>
-                      <td className="px-3 py-2"><R r={held.metrics.overall.asrNaive} tone="hostile" /></td>
-                      <td className="px-3 py-2"><R r={held.metrics.overall.asrAirlock} tone="sealed" /></td>
-                      <td className="px-3 py-2"><R r={held.metrics.overall.detected} tone="airlock" /></td>
-                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">FP <R r={held.metrics.benign.fp} /></td>
+                      <td className="px-3 py-2"><R r={held.metrics.overall.asrNaive} kind="asr" /></td>
+                      <td className="px-3 py-2"><R r={held.metrics.overall.asrAirlock} kind="asr" /></td>
+                      <td className="px-3 py-2"><R r={held.metrics.overall.detected} kind="det" /></td>
+                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">FP <R r={held.metrics.benign.fp} kind="fp" /></td>
                     </tr>
                   )}
                 </tbody>

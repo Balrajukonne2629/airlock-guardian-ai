@@ -1,3 +1,4 @@
+import { presetLabel } from "@/lib/format";
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -111,14 +112,14 @@ function LabPage() {
         <header className="flex flex-wrap items-center gap-2 border-b px-4 py-2">
           <span className="text-xs font-semibold uppercase tracking-wider">Untrusted input</span>
           <div className="ml-auto flex flex-wrap gap-1">
-            {presets.data?.map((p) => (
+            {presets.data?.map((p: NonNullable<typeof presets.data>[number]) => (
               <button
                 key={p.id}
                 onClick={() => { setText(p.payload); setResult(null); setTri(null); setCanary(p.canary_type && p.canary_value ? { type: p.canary_type as "severity" | "string", value: p.canary_value } : null); }}
-                title={p.category}
+                title={`${p.id} · ${p.category}`}
                 className={cn("rounded-sm border px-1.5 py-0.5 font-mono text-[10px] transition-colors hover:border-airlock", p.kind === "benign" ? "text-sealed" : "text-muted-foreground")}
               >
-                {p.id}
+                {presetLabel(p.id, p.category, p.kind)}
               </button>
             ))}
           </div>

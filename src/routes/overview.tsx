@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { getOverviewProof } from "@/lib/overview.functions";
 import { pct, type Ratio } from "@/lib/metrics";
 import { type buildOverviewProof } from "@/lib/overview-proof";
+import { formatIST } from "@/lib/format";
 
 const proofQuery = queryOptions({ queryKey: ["overview-proof"], queryFn: () => getOverviewProof(), staleTime: 0 });
 
@@ -60,9 +61,9 @@ function ProofPanel({ title, proof }: { title: string; proof: ReturnType<typeof 
           </dl>
           <dl className="mt-3 space-y-2 border-t pt-3 font-mono text-[11px] text-muted-foreground">
             <div><dt className="inline">Model: </dt><dd className="inline break-all text-foreground">{proof.run.model}</dd></div>
-            <div><dt className="inline">Suite: </dt><dd className="inline text-foreground">{proof.run.suite_type}</dd></div>
+            <div><dt className="inline">Suite: </dt><dd className="inline text-foreground">{({ quick: "Quick Suite", full: "Full Suite", heldout: "Held-out Suite" } as Record<string, string>)[proof.run.suite_type] ?? proof.run.suite_type}</dd></div>
             <div><dt className="inline">Sample size: </dt><dd className="inline text-foreground">{proof.run.sample_size}</dd></div>
-            <div><dt className="inline">Timestamp: </dt><dd className="inline text-foreground"><time dateTime={proof.run.started_at}>{proof.run.started_at.replace("T", " ").replace("Z", " UTC")}</time></dd></div>
+            <div><dt className="inline">Timestamp: </dt><dd className="inline text-foreground"><time dateTime={proof.run.started_at}>{formatIST(proof.run.started_at)}</time></dd></div>
           </dl>
           <p className="mt-3 text-[11px] text-muted-foreground">{proof.processed} processed · {proof.metrics.errored} errored; errors excluded from rates. Flagged = injection or suspicious.</p>
           {proof.run.status !== "complete" && <p className="mt-2 text-xs text-warning">Partial run; these are only the stored results so far.</p>}
