@@ -71,7 +71,7 @@ function BenchmarkPage() {
 
   const [model, setModel] = useState<(typeof BENCHMARK_MODEL_OPTIONS)[number]>(BENCHMARK_MODEL_OPTIONS[0]);
   const [selected, setSelected] = useState<string | undefined>(undefined);
-  const [progress, setProgress] = useState<{ suite: Suite; done: number; total: number; category: string; errored: number; t0: number } | null>(null);
+  const [progress, setProgress] = useState<{ suite: Suite; done: number; total: number; category: string; errored: number; unverified?: number; t0: number } | null>(null);
   const [now, setNow] = useState(0);
   const stopRef = useRef(false);
 
@@ -99,11 +99,11 @@ function BenchmarkPage() {
       const s = await start({ data: { suite, model } });
       runId = s.runId;
       let offset = 0;
-      let errored = 0;
+      let errored = 0; let unverified = 0;
       while (offset < s.total && !stopRef.current) {
-        setProgress({ suite, done: offset, total: s.total, category: s.items[offset]?.category ?? "", errored, t0 });
+        setProgress({ suite, done: offset, total: s.total, category: s.items[offset]?.category ?? "", errored, unverified, t0 });
         const r = await batch({ data: { runId, offset } });
-        errored += r.errored;
+        errored += r.errored; unverified += r.unverified ?? 0;
         offset = r.next;
         if (r.processed === 0) break;
       }
@@ -170,7 +170,7 @@ function BenchmarkPage() {
           <div className="border-t p-3">
             <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
               <span className="flex items-center gap-2"><Loader2 className="h-3.5 w-3.5 animate-spin text-airlock" /> {SUITE_LABEL[progress.suite]} · {progress.done} / {progress.total} · {progress.category}</span>
-              <span className="text-muted-foreground">elapsed {((now - progress.t0) / 1000).toFixed(1)}s · {progress.errored} errored</span>
+              <span className="text-muted-foreground">elapsed {((now - progress.t0) / 1000).toFixed(1)}s · {progress.errored} errored · {progress.unverified ?? 0} unverified</span>
             </div>
             <div className="mt-2 h-1.5 w-full bg-well">
               <div className="h-full bg-airlock transition-all" style={{ width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }} />
