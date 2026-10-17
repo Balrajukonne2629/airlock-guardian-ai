@@ -1,3 +1,4 @@
+import { formatIST } from "@/lib/format";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -166,7 +167,7 @@ function IncidentPage() {
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-airlock">Incident / {alert.id}</p>
           <h1 className="mt-1 text-xl font-semibold tracking-tight">{alert.alert_type} on {asset.name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span className="font-mono">{alert.source_ip}</span>·<span className="font-mono">{new Date(alert.occurred_at).toISOString().slice(0, 19).replace("T", " ")} UTC</span>·
+            <span className="font-mono">{alert.source_ip}</span>·<span className="font-mono">{formatIST(alert.occurred_at)}</span>·
             <span>Status: {inc?.status === "Approved" ? "Approved" : alert.status}</span>
           </div>
         </div>
@@ -292,7 +293,7 @@ function IncidentPage() {
                     className="mt-4 inline-flex items-center gap-2 rounded-sm border border-sealed px-3 py-1.5 text-sm font-semibold text-sealed hover:bg-secondary disabled:opacity-40"
                   >
                     <CheckCircle2 className="h-4 w-4" />
-                    {inc.status === "Approved" ? `Approved ${inc.approved_at ? new Date(inc.approved_at).toLocaleString() : ""}` : "Approve & Execute"}
+                    {inc.status === "Approved" ? `Approved ${inc.approved_at ? formatIST(inc.approved_at) : ""}` : "Approve & Execute"}
                   </button>
                 </Card>
               </>

@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { getOverviewProof } from "@/lib/overview.functions";
 import { pct, type Ratio } from "@/lib/metrics";
 import { type buildOverviewProof } from "@/lib/overview-proof";
+import { formatIST, outcomeTone, type OutcomeKind } from "@/lib/format";
 
 const proofQuery = queryOptions({ queryKey: ["overview-proof"], queryFn: () => getOverviewProof(), staleTime: 0 });
 
@@ -27,9 +28,10 @@ export const Route = createFileRoute("/overview")({
   component: OverviewPage,
 });
 
-function ProofRatio({ label, ratio, tone }: { label: string; ratio: Ratio; tone: "hostile" | "sealed" | "airlock" }) {
+function ProofRatio({ label, ratio, kind }: { label: string; ratio: Ratio; kind: OutcomeKind }) {
   const percentage = pct(ratio);
-  const toneClass = { hostile: "text-hostile", sealed: "text-sealed", airlock: "text-airlock" }[tone];
+  const tone = outcomeTone(kind, percentage);
+  const toneClass = tone ? { hostile: "text-hostile", sealed: "text-sealed", warning: "text-warning" }[tone] : "text-foreground";
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-2 border-b py-3 last:border-b-0">
       <dt className="text-xs text-muted-foreground">{label}</dt>
@@ -53,16 +55,16 @@ function ProofPanel({ title, proof }: { title: string; proof: ReturnType<typeof 
       ) : (
         <div className="px-4 pb-4">
           <dl>
-            <ProofRatio label="Naive compromised" ratio={proof.metrics.overall.asrNaive} tone="hostile" />
-            <ProofRatio label="Airlock compromised" ratio={proof.metrics.overall.asrAirlock} tone="sealed" />
-            <ProofRatio label="Airlock flagged attacks" ratio={proof.metrics.overall.detected} tone="airlock" />
-            <ProofRatio label="False positives / benign" ratio={proof.metrics.benign.fp} tone="hostile" />
+            <ProofRatio label="Attack success · Naive" ratio={proof.metrics.overall.asrNaive} kind="asr" />
+            <ProofRatio label="Attack success · Airlock" ratio={proof.metrics.overall.asrAirlock} kind="asr" />
+            <ProofRatio label="Detected (injection + suspicious)" ratio={proof.metrics.overall.detected} kind="det" />
+            <ProofRatio label="False positives (benign)" ratio={proof.metrics.benign.fp} kind="fp" />
           </dl>
           <dl className="mt-3 space-y-2 border-t pt-3 font-mono text-[11px] text-muted-foreground">
             <div><dt className="inline">Model: </dt><dd className="inline break-all text-foreground">{proof.run.model}</dd></div>
-            <div><dt className="inline">Suite: </dt><dd className="inline text-foreground">{proof.run.suite_type}</dd></div>
+            <div><dt className="inline">Suite: </dt><dd className="inline text-foreground">{({ quick: "Quick Suite", full: "Full Suite", heldout: "Held-out Suite" } as Record<string, string>)[proof.run.suite_type] ?? proof.run.suite_type}</dd></div>
             <div><dt className="inline">Sample size: </dt><dd className="inline text-foreground">{proof.run.sample_size}</dd></div>
-            <div><dt className="inline">Timestamp: </dt><dd className="inline text-foreground"><time dateTime={proof.run.started_at}>{proof.run.started_at.replace("T", " ").replace("Z", " UTC")}</time></dd></div>
+            <div><dt className="inline">Timestamp: </dt><dd className="inline text-foreground"><time dateTime={proof.run.started_at}>{formatIST(proof.run.started_at)}</time></dd></div>
           </dl>
           <p className="mt-3 text-[11px] text-muted-foreground">{proof.processed} processed · {proof.metrics.errored} errored; errors excluded from rates. Flagged = injection or suspicious.</p>
           {proof.run.status !== "complete" && <p className="mt-2 text-xs text-warning">Partial run; these are only the stored results so far.</p>}
