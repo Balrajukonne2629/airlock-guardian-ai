@@ -24,7 +24,7 @@ Give a reason of at most 20 words. Respond by calling classify.`;
 
 export async function scanText(
   text: string,
-  log: { alertId?: string | null; field?: string | null; source: string },
+  log: { alertId?: string | null; field?: string | null; source: string; visitorHash?: string | undefined },
   model: string = AI_MODEL,
 ): Promise<ScanResult> {
   const hits = scanLayer1(text);
@@ -61,12 +61,14 @@ export async function scanText(
   await supabaseAdmin.from("airlock_events").insert({
     alert_id: log.alertId ?? null,
     field_name: log.field ?? null,
-    input_text: text,
+    input_text: log.source === "guest" ? text.slice(0, 500) : text,
     verdict,
     matched_rules: hits as unknown as never,
     reason,
     sanitized_text: sanitized,
     source: log.source,
+    guest: log.source === "guest",
+    visitor_hash: log.visitorHash ?? null,
   });
 
   return { verdict, matchedRules: hits, layer2, reason, cleaned, sanitized, model };

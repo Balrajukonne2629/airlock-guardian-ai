@@ -40,6 +40,7 @@ export type Database = {
           alert_id: string | null
           created_at: string
           field_name: string | null
+          guest: boolean
           id: string
           input_text: string
           matched_rules: Json
@@ -47,11 +48,13 @@ export type Database = {
           sanitized_text: string | null
           source: string
           verdict: string
+          visitor_hash: string | null
         }
         Insert: {
           alert_id?: string | null
           created_at?: string
           field_name?: string | null
+          guest?: boolean
           id?: string
           input_text: string
           matched_rules?: Json
@@ -59,11 +62,13 @@ export type Database = {
           sanitized_text?: string | null
           source?: string
           verdict: string
+          visitor_hash?: string | null
         }
         Update: {
           alert_id?: string | null
           created_at?: string
           field_name?: string | null
+          guest?: boolean
           id?: string
           input_text?: string
           matched_rules?: Json
@@ -71,6 +76,7 @@ export type Database = {
           sanitized_text?: string | null
           source?: string
           verdict?: string
+          visitor_hash?: string | null
         }
         Relationships: [
           {
@@ -351,6 +357,60 @@ export type Database = {
         }
         Relationships: []
       }
+      guest_budget: {
+        Row: {
+          calls: number
+          day: string
+        }
+        Insert: {
+          calls?: number
+          day: string
+        }
+        Update: {
+          calls?: number
+          day?: string
+        }
+        Relationships: []
+      }
+      guest_settings: {
+        Row: {
+          ai_enabled: boolean
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ai_enabled?: boolean
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ai_enabled?: boolean
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      guest_usage: {
+        Row: {
+          runs: number
+          visitor_key: string
+          window_start: string
+        }
+        Insert: {
+          runs?: number
+          visitor_key: string
+          window_start: string
+        }
+        Update: {
+          runs?: number
+          visitor_key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       incidents: {
         Row: {
           airlock_output: Json | null
@@ -451,10 +511,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admit_guest_run: {
+        Args: {
+          p_calls: number
+          p_daily_calls: number
+          p_ip_key: string
+          p_max_runs: number
+          p_token_key: string
+        }
+        Returns: Json
+      }
       approve_incident_audited: { Args: { p_id: string }; Returns: string }
       create_owned_benchmark: {
         Args: { p_model: string; p_size: number; p_suite: string }
         Returns: string
+      }
+      guest_status: {
+        Args: { p_ip_key: string; p_token_key: string }
+        Returns: Json
       }
       is_logairlock_operator: { Args: never; Returns: boolean }
       refresh_demo_publications: { Args: never; Returns: undefined }
@@ -462,6 +536,7 @@ export type Database = {
         Args: { p_action: string; p_calls: number }
         Returns: undefined
       }
+      set_guest_ai_enabled: { Args: { p_enabled: boolean }; Returns: undefined }
       update_asset_value_audited: {
         Args: { p_id: string; p_value: number }
         Returns: undefined

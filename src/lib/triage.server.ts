@@ -95,10 +95,10 @@ export async function triageNaive(b: AlertBundle, model: string = AI_MODEL): Pro
 }
 
 /** AIRLOCK: every untrusted field scanned; injections quarantined; rest isolated as quoted evidence. */
-export async function triageAirlock(b: AlertBundle, source = "triage", model: string = AI_MODEL): Promise<{ output: TriageOutput; scans: FieldScan[] }> {
+export async function triageAirlock(b: AlertBundle, source = "triage", model: string = AI_MODEL, visitorHash?: string): Promise<{ output: TriageOutput; scans: FieldScan[] }> {
   const scans = await Promise.all(
     Object.entries(b.fields).map(async ([field, raw]) => {
-      const r = await scanText(raw, { alertId: source === "triage" ? b.id : null, field, source }, model);
+      const r = await scanText(raw, { alertId: source === "triage" ? b.id : null, field, source, visitorHash }, model);
       return { field, raw, verdict: r.verdict, reason: r.reason, layer2Reason: r.layer2.reason, matchedRules: [...new Set(r.matchedRules.map((h) => h.rule))], cleaned: r.cleaned };
     }),
   );

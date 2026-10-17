@@ -36,6 +36,13 @@
       "when": 1792241703951,
       "tag": "0004_secure_operations_and_public_demo",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792245777962,
+      "tag": "0005_guest_demo_mode",
+      "breakpoints": true
     }
   ]
 }
