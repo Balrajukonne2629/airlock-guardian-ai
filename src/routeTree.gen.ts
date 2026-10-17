@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BenchmarkRouteImport } from './routes/benchmark'
 import { Route as LabRouteImport } from './routes/lab'
+import { Route as OverviewRouteImport } from './routes/overview'
 import { Route as IncidentIdRouteImport } from './routes/incident.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const LabRoute = LabRouteImport.update({
   path: '/lab',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OverviewRoute = OverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IncidentIdRoute = IncidentIdRouteImport.update({
   id: '/incident/$id',
   path: '/incident/$id',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/benchmark': typeof BenchmarkRoute
   '/lab': typeof LabRoute
+  '/overview': typeof OverviewRoute
   '/incident/$id': typeof IncidentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/benchmark': typeof BenchmarkRoute
   '/lab': typeof LabRoute
+  '/overview': typeof OverviewRoute
   '/incident/$id': typeof IncidentIdRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/benchmark': typeof BenchmarkRoute
   '/lab': typeof LabRoute
+  '/overview': typeof OverviewRoute
   '/incident/$id': typeof IncidentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/benchmark' | '/lab' | '/incident/$id'
+  fullPaths: '/' | '/benchmark' | '/lab' | '/overview' | '/incident/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/benchmark' | '/lab' | '/incident/$id'
-  id: '__root__' | '/' | '/benchmark' | '/lab' | '/incident/$id'
+  to: '/' | '/benchmark' | '/lab' | '/overview' | '/incident/$id'
+  id: '__root__' | '/' | '/benchmark' | '/lab' | '/overview' | '/incident/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BenchmarkRoute: typeof BenchmarkRoute
   LabRoute: typeof LabRoute
+  OverviewRoute: typeof OverviewRoute
   IncidentIdRoute: typeof IncidentIdRoute
 }
 
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LabRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/overview': {
+      id: '/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof OverviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/incident/$id': {
       id: '/incident/$id'
       path: '/incident/$id'
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BenchmarkRoute: BenchmarkRoute,
   LabRoute: LabRoute,
+  OverviewRoute: OverviewRoute,
   IncidentIdRoute: IncidentIdRoute,
 }
 export const routeTree = rootRouteImport
