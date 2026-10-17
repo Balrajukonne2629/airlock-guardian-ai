@@ -22,7 +22,9 @@ export const Route = createFileRoute("/benchmark")({
       { title: "Benchmark — LogAirlock" },
       { name: "description", content: "Measured prompt-injection attack success rate: naive agent vs Airlock, from stored benchmark runs." },
       { property: "og:title", content: "Benchmark — LogAirlock" },
+      { name: "twitter:title", content: "Benchmark — LogAirlock" },
       { property: "og:description", content: "Prompt-injection benchmark results for SOC triage." },
+      { name: "twitter:description", content: "Prompt-injection benchmark results for SOC triage." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -188,10 +190,10 @@ function BenchmarkPage() {
           <section className="border-y bg-card">
             <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2">
               <h2 className="text-sm font-semibold">Results</h2>
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <RunMeta run={main.run} m={m} />
                 {mainRuns.length > 1 && (
-                  <select value={selectedId} onChange={(e) => setSelected(e.target.value)} className="log-well rounded-sm px-1.5 py-0.5 text-[10px] text-foreground">
+                  <select value={selectedId} onChange={(e) => setSelected(e.target.value)} aria-label="Choose stored run" className="log-well max-w-full min-h-11 rounded-sm px-1.5 py-0.5 text-xs text-foreground sm:min-h-0">
                     {mainRuns.map((r: (typeof runs)[number]) => <option key={r.id} value={r.id}>{SUITE_LABEL[r.suite_type]} · {formatIST(r.started_at)}</option>)}
                   </select>
                 )}
