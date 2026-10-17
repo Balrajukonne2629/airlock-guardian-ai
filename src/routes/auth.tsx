@@ -13,7 +13,9 @@ export const Route = createFileRoute("/auth")({
     { title: "Account access — LogAirlock" },
     { name: "description", content: "Sign in to LogAirlock. Operational actions require separately approved permissions." },
     { property: "og:title", content: "Account access — LogAirlock" },
+    { name: "twitter:title", content: "Account access — LogAirlock" },
     { property: "og:description", content: "Verified account access for LogAirlock security operations." },
+    { name: "twitter:description", content: "Verified account access for LogAirlock security operations." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }), component: AccountPage,
 });
