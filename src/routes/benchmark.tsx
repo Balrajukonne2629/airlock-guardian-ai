@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -50,7 +51,7 @@ function useRunMetrics(id: string | undefined) {
 
 function RunMeta({ run, m }: { run: { suite_type: string; sample_size: number; model: string; started_at: string; elapsed_seconds: number | null; status: string }; m: Metrics }) {
   return (
-    <span className="font-mono text-[10px] text-muted-foreground">
+    <span className="text-xs text-muted-foreground">
       {SUITE_LABEL[run.suite_type]} · n={m.overall.payloads} attacks + {m.benign.total} benign · {run.model} · {formatIST(run.started_at)} · {run.elapsed_seconds ?? "—"}s ·{" "}
       <span className={m.errored ? "text-warning" : ""}>{m.errored} errored</span>
       {run.status === "aborted" && <span className="text-warning"> · stopped early</span>}
@@ -123,25 +124,26 @@ function BenchmarkPage() {
   if (held.metrics) chart.push({ name: "Held-out (all)", Naive: pct(held.metrics.overall.asrNaive) ?? 0, Airlock: pct(held.metrics.overall.asrAirlock) ?? 0 });
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4">
+    <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="micro-label text-airlock">Proof / Measured</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Benchmark</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Every number below is read from stored run results. Nothing is precomputed.</p>
+          <p className="text-xs text-muted-foreground">Workspace / Benchmark</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-normal">Benchmark</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Stored runs · Naive agent and Airlock comparison</p>
         </div>
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <label className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground">
           Benchmark model
-          <select value={model} onChange={(e) => setModel(e.target.value as typeof model)} disabled={!!progress} className="log-well rounded-sm px-2 py-1 text-foreground">
+          <select value={model} onChange={(e) => setModel(e.target.value as typeof model)} disabled={!!progress} className="min-w-0 max-w-full rounded-sm border bg-card px-2 py-2 text-xs text-foreground">
             {BENCHMARK_MODEL_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
         </label>
       </div>
 
-      <section className="border bg-card">
+      <section className="border-y bg-card">
         <div className="flex flex-wrap items-center gap-2 p-3">
           {(["quick", "full", "heldout"] as Suite[]).map((s) => (
-            <button
+            <Button
+              variant={s === "quick" ? "default" : "outline"}
               key={s}
               onClick={() => run(s)}
               disabled={!!progress}
@@ -151,12 +153,12 @@ function BenchmarkPage() {
               )}
             >
               <Play className="h-3.5 w-3.5" /> Run {SUITE_LABEL[s]} ({SUITE_N[s]} items)
-            </button>
+            </Button>
           ))}
           {progress && (
-            <button onClick={() => (stopRef.current = true)} className="ml-auto inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground">
+            <Button onClick={() => (stopRef.current = true)} className="ml-auto inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground">
               <Square className="h-3 w-3" /> Stop after batch
-            </button>
+            </Button>
           )}
         </div>
         {progress && (
@@ -178,9 +180,9 @@ function BenchmarkPage() {
 
       {m && main.run && (
         <>
-          <section className="border bg-card">
+          <section className="border-y bg-card">
             <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2">
-              <h2 className="text-xs font-semibold uppercase tracking-wider">Results</h2>
+              <h2 className="text-sm font-semibold">Results</h2>
               <div className="flex items-center gap-2">
                 <RunMeta run={main.run} m={m} />
                 {mainRuns.length > 1 && (
@@ -193,7 +195,7 @@ function BenchmarkPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-sm">
                 <thead>
-                  <tr className="border-b text-left text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <tr className="border-b text-left text-xs text-muted-foreground">
                     {["Category", "Payloads", "Attack success · Naive", "Attack success · Airlock", "Detected (injection + suspicious)", "Injection / Suspicious"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}
                   </tr>
                 </thead>
@@ -242,8 +244,8 @@ function BenchmarkPage() {
           </section>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            <section className="border bg-card lg:col-span-2">
-              <header className="border-b px-4 py-2 text-xs font-semibold uppercase tracking-wider">Attack success rate · Naive vs Airlock (%)</header>
+            <section className="min-w-0 border-y lg:col-span-2">
+              <header className="border-b px-4 py-2 text-sm font-semibold">Attack success rate · Naive vs Airlock (%)</header>
               <div className="h-72 p-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chart} margin={{ top: 8, right: 8, bottom: 40, left: 0 }}>
@@ -263,8 +265,8 @@ function BenchmarkPage() {
 
             <section className="border border-l-2 border-l-warning bg-card">
               <header className="flex items-center justify-between border-b px-4 py-2">
-                <h2 className="text-xs font-semibold uppercase tracking-wider">Severity drift</h2>
-                <span className="text-[10px] uppercase text-warning">indicative</span>
+                <h2 className="text-sm font-semibold">Severity drift</h2>
+                <span className="text-xs text-warning">indicative</span>
               </header>
               <div className="space-y-2 p-4 font-mono text-xs">
                 <p className="text-muted-foreground">Clean baseline: <span className="text-foreground">{m.drift.baseline ?? "unavailable"}</span></p>
@@ -278,7 +280,7 @@ function BenchmarkPage() {
       )}
 
       <section className="border border-l-2 border-l-warning bg-card px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-warning">Limitations</p>
+        <p className="text-sm font-semibold text-warning">Limitations</p>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
           <li>Small sample (40 seeded attacks, 40 benign lines, 10 + 5 held-out). Results are indicative, not statistically robust.</li>
           <li>Single model per run. Other models may behave differently.</li>

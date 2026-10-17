@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { formatIST } from "@/lib/format";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { ShieldAlert, ShieldCheck, ShieldQuestion } from "lucide-react";
 import { listAlerts } from "@/lib/alerts.functions";
@@ -47,40 +47,40 @@ const SEV_TONE: Record<string, string> = {
 
 function AlertsPage() {
   const { data } = useSuspenseQuery(alertsQuery);
-  const navigate = useNavigate();
   const counts = data.reduce<Record<string, number>>((a, r) => ((a[r.severity] = (a[r.severity] ?? 0) + 1), a), {});
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      {/* Masthead — document header, not a card */}
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-6 border-b pb-6">
+    <div className="mx-auto max-w-7xl space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-6">
         <div>
-          <p className="micro-label text-airlock">Queue · Live feed</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Alert Queue</h1>
+          <p className="text-xs text-muted-foreground">Workspace / Alerts</p>
+          <h1 className="mt-3 text-3xl font-semibold">Alert Queue</h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
-            Every untrusted field passes the Airlock before the triage agent reads it.
+            Demo Corp <span className="mx-2 text-border">/</span> SOC-IN-01
           </p>
         </div>
-        {/* Severity counters as oversized instrument numerals */}
-        <div className="flex divide-x border-y">
+      </div>
+        <div className="grid grid-cols-2 gap-y-5 border-y py-5 sm:grid-cols-4">
           {(["Critical", "High", "Medium", "Low"] as const).map((s) => (
-            <div key={s} className="px-5 py-3 text-center first:pl-0 last:pr-0">
-              <div className={`font-mono text-3xl font-semibold leading-none tabular-nums ${SEV_TONE[s]}`}>
-                {String(counts[s] ?? 0).padStart(2, "0")}
+            <div key={s} className="border-l pl-5 first:border-l-0 first:pl-0">
+              <div className="mb-2 text-sm text-muted-foreground">{s}</div>
+              <div className={`text-2xl font-medium leading-none tabular-nums ${SEV_TONE[s]}`}>
+                {counts[s] ?? 0}
               </div>
-              <div className="micro-label mt-2">{s}</div>
             </div>
           ))}
         </div>
+      <section className="min-w-0">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-semibold">All alerts <span className="ml-2 font-normal text-muted-foreground">{data.length}</span></h2>
+        <span className="text-xs text-muted-foreground">Latest activity</span>
       </div>
-
-      {/* Queue table — ledger style, row rules only */}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px] border-collapse text-sm">
           <thead>
             <tr className="border-b text-left">
               {["ID", "Timestamp", "Source IP", "Asset", "Alert type", "Severity", "Status", "Airlock", ""].map((h) => (
-                <th key={h} className="micro-label px-3 py-2 font-normal">{h}</th>
+                <th key={h} className="bg-card px-3 py-3 text-xs font-medium text-muted-foreground">{h}</th>
               ))}
             </tr>
           </thead>
@@ -88,18 +88,16 @@ function AlertsPage() {
             {data.map((a) => (
               <tr
                 key={a.id}
-                onClick={() => navigate({ to: "/incident/$id", params: { id: a.id } })}
-                className="group cursor-pointer border-b transition-colors last:border-b-0 hover:bg-secondary"
+                className="group relative border-b transition-colors last:border-b-0 hover:bg-secondary focus-within:bg-secondary"
               >
-                <td className="whitespace-nowrap px-3 py-3 font-mono text-xs">
-                  <span className="mr-2 inline-block h-1.5 w-1.5 bg-airlock opacity-0 transition-opacity group-hover:opacity-100" />
-                  <span className="text-airlock">{a.id}</span>
+                <td className="whitespace-nowrap px-3 py-4 text-xs font-medium">
+                  <Link to="/incident/$id" params={{ id: a.id }} className="text-foreground after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-1 focus-visible:after:ring-ring">{a.id}</Link>
                 </td>
-                <td className="whitespace-nowrap px-3 py-3 font-mono text-xs tabular-nums text-muted-foreground">
+                <td className="whitespace-nowrap px-3 py-4 text-xs tabular-nums text-muted-foreground">
                   {formatIST(a.occurred_at)}
                 </td>
                 <td className="px-3 py-3 font-mono text-xs tabular-nums">{a.source_ip}</td>
-                <td className="whitespace-nowrap px-3 py-3 font-mono text-xs">{a.asset?.name}</td>
+                <td className="whitespace-nowrap px-3 py-4 text-xs">{a.asset?.name}</td>
                 <td className="px-3 py-3">{a.alert_type}</td>
                 <td className="px-3 py-3"><StatusBadge tone={severityTone(a.severity)}>{a.severity}</StatusBadge></td>
                 <td className="px-3 py-3 text-xs text-muted-foreground">{a.status}</td>
@@ -110,9 +108,8 @@ function AlertsPage() {
           </tbody>
         </table>
       </div>
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-        {data.length} alerts · synthetic data · Airlock status updates after triage runs on an incident
-      </p>
+      <p className="mt-4 text-xs text-muted-foreground">{data.length} alerts · Synthetic data</p>
+      </section>
     </div>
   );
 }

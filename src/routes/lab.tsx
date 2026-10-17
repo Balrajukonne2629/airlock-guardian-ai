@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { presetLabel } from "@/lib/format";
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useQuery } from "@tanstack/react-query";
@@ -39,7 +40,7 @@ function Panel({ title, step, children, className }: { title: string; step: stri
     <section className={cn("corner-ticks border bg-card", className)}>
       <header className="flex items-center justify-between border-b px-4 py-2.5">
         <h2 className="micro-label !text-foreground">{title}</h2>
-        <span className="font-mono text-[10px] text-muted-foreground">{step}</span>
+        <span className="text-xs text-muted-foreground">{step}</span>
       </header>
       <div className="p-4">{children}</div>
     </section>
@@ -101,26 +102,28 @@ function LabPage() {
   const l2 = result ? verdictMeta[result.layer2.verdict] : null;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4">
-      <div className="border-b pb-5">
-        <p className="micro-label text-airlock">Lab / Containment</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Airlock Lab</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Paste any untrusted log text. Two layers decide before an agent ever reads it.</p>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="pb-2">
+        <p className="text-xs text-muted-foreground">Workspace / Lab</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-normal">Airlock Lab</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Prompt-injection analysis</p>
       </div>
 
       <section className="border bg-card">
         <header className="flex flex-wrap items-center gap-2 border-b px-4 py-2">
-          <span className="text-xs font-semibold uppercase tracking-wider">Untrusted input</span>
+          <span className="text-sm font-semibold">Untrusted input</span>
           <div className="ml-auto flex flex-wrap gap-1">
             {presets.data?.map((p: NonNullable<typeof presets.data>[number]) => (
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 key={p.id}
                 onClick={() => { setText(p.payload); setResult(null); setTri(null); setCanary(p.canary_type && p.canary_value ? { type: p.canary_type as "severity" | "string", value: p.canary_value } : null); }}
                 title={`${p.id} · ${p.category}`}
-                className={cn("rounded-sm border px-1.5 py-0.5 font-mono text-[10px] transition-colors hover:border-airlock", p.kind === "benign" ? "text-sealed" : "text-muted-foreground")}
+                className={cn("rounded-sm border px-1.5 py-0.5 text-xs transition-colors hover:border-airlock", p.kind === "benign" ? "text-sealed" : "text-muted-foreground")}
               >
                 {presetLabel(p.id, p.category, p.kind)}
-              </button>
+              </Button>
             ))}
           </div>
         </header>
@@ -131,16 +134,16 @@ function LabPage() {
           rows={5}
           className="log-well block w-full resize-y border-0 border-b p-3 text-foreground outline-none focus:ring-1 focus:ring-airlock"
         />
-        <div className="flex items-center justify-between px-4 py-2">
-          <span className="font-mono text-[10px] text-muted-foreground">{text.length} chars · treated as data, never instructions</span>
-          <button
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <span className="text-xs text-muted-foreground">{text.length} characters</span>
+          <Button
             onClick={run}
             disabled={busy || !text.trim()}
             className="inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
             {busy ? "Scanning…" : "Run Airlock"}
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -152,7 +155,7 @@ function LabPage() {
             {result.verdict === "injection" ? <ShieldAlert className="h-5 w-5 text-hostile" /> : result.verdict === "suspicious" ? <TriangleAlert className="h-5 w-5 text-warning" /> : <ShieldCheck className="h-5 w-5 text-sealed" />}
             <span className="text-sm font-semibold">Final verdict</span>
             <StatusBadge tone={final.tone}>{final.label}</StatusBadge>
-            <span className="ml-auto font-mono text-[10px] text-muted-foreground">model {result.model}</span>
+            <span className="ml-auto text-xs text-muted-foreground">model {result.model}</span>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
@@ -165,7 +168,7 @@ function LabPage() {
                     <li key={i} className="border-b pb-2 last:border-b-0 last:pb-0">
                       <div className="flex items-center gap-2">
                         <StatusBadge tone={h.strength === "high" ? "hostile" : "warning"} mono>{h.rule}</StatusBadge>
-                        <span className="text-[10px] uppercase text-muted-foreground">{h.strength}</span>
+                        <span className="text-xs text-muted-foreground">{h.strength}</span>
                       </div>
                       <p className="mt-1 break-words font-mono text-xs text-hostile">{h.match}</p>
                       {h.note && <p className="mt-0.5 break-words font-mono text-[11px] text-muted-foreground">{h.note}</p>}
@@ -188,8 +191,8 @@ function LabPage() {
 
       <section className="border bg-card">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wider">Triage side-by-side</h2>
-          <span className="font-mono text-[10px] text-muted-foreground">
+          <h2 className="text-sm font-semibold">Triage side-by-side</h2>
+          <span className="text-xs text-muted-foreground">
             context: web shell upload on web-portal-02 · input placed in user_agent
             {tri?.canary && <> · canary: <span className="text-warning">{tri.canary.type === "severity" ? `severity → ${tri.canary.value}` : tri.canary.value}</span></>}
           </span>
@@ -203,7 +206,7 @@ function LabPage() {
             <TriageSide title="With Airlock" s={tri.airlock} canary={!!tri.canary} />
           </div>
         )}
-        {tri && <p className="border-t px-4 py-1.5 font-mono text-[10px] text-muted-foreground">model {tri.model} · same prompt task, schema and model in both modes</p>}
+        {tri && <p className="border-t px-4 py-1.5 text-xs text-muted-foreground">model {tri.model} · same prompt task, schema and model in both modes</p>}
       </section>
     </div>
   );
@@ -220,7 +223,7 @@ function TriageSide({ title, s, canary, naive }: { title: string; s: LabSide; ca
   return (
     <div className={cn("border-l-2 p-4 md:border-r md:last:border-r-0", s.ok && s.obeyed ? "border-l-hostile" : naive ? "border-l-border" : "border-l-airlock")}>
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider">{title}</p>
+        <p className="text-sm font-semibold">{title}</p>
         <StatusBadge tone={badge.tone}>{badge.label}</StatusBadge>
       </div>
       {s.ok ? (

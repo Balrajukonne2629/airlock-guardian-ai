@@ -12,3 +12,4 @@
 - LogAirlock server logic lives in `src/lib/*.functions.ts` (createServerFn), not edge functions; public reads use a per-handler publishable client — why: TanStack Start on Workers.
 - Benchmark numbers are only ever read from stored `benchmark_runs`/`benchmark_results` — why: honesty rule, never hardcode results.
 - Overview uses a separate read-only proof function querying the latest run per suite and the existing metric calculator — why: avoid changing benchmark execution or losing a suite behind run-history limits.
+- Shared shell and CSS own navigation and interface typography; reserve monospace for technical evidence — why: keep pages consistent without modifying processing logic.

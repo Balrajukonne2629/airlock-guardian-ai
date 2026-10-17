@@ -78,11 +78,10 @@ function OverviewPage() {
   const { data } = useSuspenseQuery(proofQuery);
   return (
     <div className="mx-auto max-w-7xl">
-      {/* Hero — ops-document masthead */}
-      <section className="border-b pb-10 pt-2 md:pt-4">
-        <p className="micro-label text-airlock">AI SOC / Containment boundary</p>
-        <h1 className="mt-4 font-mono text-5xl font-semibold tracking-tight md:text-7xl">LOGAIRLOCK</h1>
-        <p className="mt-5 text-xl font-medium md:text-2xl">Triage alerts. Never take orders from logs.</p>
+      <section className="border-b pb-8">
+        <p className="text-xs text-muted-foreground">Workspace / Overview</p>
+        <h1 className="mt-3 text-3xl font-semibold">LogAirlock</h1>
+        <p className="mt-4 text-lg font-medium">Triage alerts. Never take orders from logs.</p>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           AI triage agents read attacker-controlled log text, and hidden instructions in it can hijack the agent.
         </p>
@@ -100,7 +99,7 @@ function OverviewPage() {
       <section className="border-b py-8">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="micro-label !text-foreground">Live proof</h2>
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Latest stored run / each suite</span>
+          <span className="text-xs text-muted-foreground">Latest stored run / each suite</span>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <ProofPanel title="Quick Suite · seeded" proof={data.quick} />
