@@ -3,7 +3,7 @@ import { buildOverviewProof } from "./overview-proof";
 
 export const getOverviewProof = createServerFn({ method: "GET" }).handler(async () => {
   const { publicClient } = await import("./supabase-public.server");
-  const sb = publicClient();
+  const sb = await publicClient();
   async function latest(suite: "quick" | "heldout") {
     const { data: run, error } = await sb.from("benchmark_runs")
       .select("id, suite_type, sample_size, model, status, started_at, baseline_severity")

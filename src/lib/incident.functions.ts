@@ -13,7 +13,7 @@ export const getIncident = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ id: z.string().max(40) }).parse(d))
   .handler(async ({ data }) => {
     const { publicClient } = await import("./supabase-public.server");
-    const sb = publicClient();
+    const sb = await publicClient();
     const { data: alert, error } = await sb
       .from("alerts")
       .select("*, asset:assets(*)")

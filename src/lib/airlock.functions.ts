@@ -24,7 +24,7 @@ export const airlockScan = createServerFn({ method: "POST" })
 
 export const listPresets = createServerFn({ method: "GET" }).handler(async () => {
   const { publicClient } = await import("./supabase-public.server");
-  const { data, error } = await publicClient()
+  const { data, error } = (await publicClient())
     .from("benchmark_payloads")
     .select("id, kind, category, payload, canary_goal, canary_type, canary_value")
     .in("id", ["A-UA-1", "A-FS-2", "A-B64-1", "A-ML-2", "A-TC-1", "A-EX-1", "B-06", "B-07"]);
