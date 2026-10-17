@@ -83,10 +83,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "LogAirlock" },
       { name: "description", content: "AI SOC triage that never takes orders from logs." },
-      { property: "og:title", content: "LogAirlock" },
-      { property: "og:description", content: "AI SOC triage that never takes orders from logs." },
-      { name: "twitter:title", content: "LogAirlock" },
-      { name: "twitter:description", content: "AI SOC triage that never takes orders from logs." },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
