@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireOperator } from "./operation-auth";
+import { assertOwnedRun } from "./operation-policy";
 import { judgeCanary, type Canary } from "./canary";
 
 export const BENCHMARK_MODEL_OPTIONS = ["google/gemini-3-flash-preview", "google/gemini-3.1-flash-lite", "google/gemini-3.8-flash"] as const;
@@ -37,17 +39,17 @@ async function suiteItems(suite: Suite) {
 }
 
 export const startRun = createServerFn({ method: "POST" })
+  .middleware([requireOperator])
   .inputValidator((d) => z.object({ suite: z.enum(SUITES), model: z.enum(BENCHMARK_MODEL_OPTIONS) }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { triageNaive } = await import("./triage.server");
     const items = await suiteItems(data.suite);
-    const { data: run, error } = await supabaseAdmin
-      .from("benchmark_runs")
-      .insert({ suite_type: data.suite, sample_size: items.length, model: data.model })
-      .select()
-      .single();
-    if (error || !run) throw new Error(error?.message ?? "Could not create run");
+    const { reserveUsage } = await import("./operation.server");
+    await reserveUsage(context.supabase, 1, "benchmark.baseline");
+    const { data: runId, error } = await context.supabase.rpc("create_owned_benchmark", { p_suite: data.suite, p_model: data.model, p_size: items.length });
+    if (error || !runId) throw new Error(error?.message.includes("active benchmark") ? error.message : "Could not start benchmark.");
+    const run = { id: runId };
     // one clean baseline triage on the unpoisoned base alert
     try {
       const b = await triageNaive(bundle(BASE_UA), data.model);
@@ -59,16 +61,21 @@ export const startRun = createServerFn({ method: "POST" })
   });
 
 export const runBatch = createServerFn({ method: "POST" })
+  .middleware([requireOperator])
   .inputValidator((d) => z.object({ runId: z.string().uuid(), offset: z.number().int().min(0) }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { triageNaive, triageAirlock } = await import("./triage.server");
     const { scanText } = await import("./airlock.server");
     const { data: run } = await supabaseAdmin.from("benchmark_runs").select("*").eq("id", data.runId).single();
-    if (!run || run.status !== "running") throw new Error("Run is not active");
+    assertOwnedRun(run, context.userId);
+    if (!run) throw new Error("Run not found");
     const model = run.model;
     const items = (await suiteItems(run.suite_type as Suite)).slice(data.offset, data.offset + BATCH);
 
+    if (!items.length) return { processed: 0, errored: 0, next: data.offset };
+    const { reserveUsage } = await import("./operation.server");
+    await reserveUsage(context.supabase, items.reduce((n, p) => n + (p.kind === "benign" ? 1 : 4), 0), "benchmark.batch");
     const rows = await Promise.all(
       items.map(async (p) => {
         const base = { run_id: run.id, payload_id: p.id, kind: p.kind, category: p.category, model };
@@ -84,7 +91,8 @@ export const runBatch = createServerFn({ method: "POST" })
           const canary: Canary | null = p.canary_type && p.canary_value ? { type: p.canary_type as Canary["type"], value: p.canary_value } : null;
           const b = bundle(p.payload);
           const [n, a] = await Promise.all([triageNaive(b, model), triageAirlock(b, "benchmark", model)]);
-          const ua = a.scans.find((s) => s.field === "user_agent")!;
+          const ua = a.scans.find((s) => s.field === "user_agent");
+          if (!ua) throw new Error("Scan not recorded");
           if (ua.layer2Reason?.startsWith("Layer 2 unavailable")) throw new Error(ua.layer2Reason);
           return {
             ...base, status: "ok", scan_verdict: ua.verdict, detected: ua.verdict !== "clean",
@@ -107,11 +115,13 @@ export const runBatch = createServerFn({ method: "POST" })
   });
 
 export const finalizeRun = createServerFn({ method: "POST" })
+  .middleware([requireOperator])
   .inputValidator((d) => z.object({ runId: z.string().uuid(), aborted: z.boolean().optional() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { computeMetrics } = await import("./metrics");
     const { data: run } = await supabaseAdmin.from("benchmark_runs").select("*").eq("id", data.runId).single();
+    assertOwnedRun(run, context.userId);
     if (!run) throw new Error("Run not found");
     const { data: res } = await supabaseAdmin.from("benchmark_results").select("*").eq("run_id", run.id);
     const metrics = computeMetrics(res ?? [], run.baseline_severity);
@@ -125,29 +135,20 @@ export const finalizeRun = createServerFn({ method: "POST" })
         metrics: metrics as never,
       })
       .eq("id", run.id);
+    const { refreshDemo } = await import("./operation.server");
+    await refreshDemo();
     return { ok: true };
   });
 
 export const listRuns = createServerFn({ method: "GET" }).handler(async () => {
-  const { publicClient } = await import("./supabase-public.server");
-  const { data, error } = await (await publicClient())
-    .from("benchmark_runs")
-    .select("id, suite_type, sample_size, model, status, started_at, elapsed_seconds, baseline_severity")
-    .in("status", ["complete", "aborted"])
-    .order("started_at", { ascending: false })
-    .limit(30);
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  const { readDemo } = await import("./supabase-public.server");
+  return (await readDemo("runs")).map((s) => s.run).filter((r) => ["complete", "aborted"].includes(r.status)).slice(0, 30);
 });
 
 export const getRunResults = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ runId: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
-    const { publicClient } = await import("./supabase-public.server");
-    const sb = await publicClient();
-    const [{ data: run }, { data: results }] = await Promise.all([
-      sb.from("benchmark_runs").select("*").eq("id", data.runId).single(),
-      sb.from("benchmark_results").select("kind, category, status, scan_verdict, naive_success, airlock_success, naive_severity, airlock_severity, error").eq("run_id", data.runId),
-    ]);
-    return { run, results: results ?? [] };
+    const { readDemo } = await import("./supabase-public.server");
+    const stored = (await readDemo("runs")).find((r) => r.run.id === data.runId);
+    return { run: stored?.run ?? null, results: stored?.results ?? [] };
   });

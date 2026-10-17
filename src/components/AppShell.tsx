@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { useAccess } from "./AccessProvider";
 
 function AirlockMark() {
   return (
@@ -20,6 +21,7 @@ const nav = [
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const access = useAccess();
   const presentation = useRouterState({ select: (state) => state.location.pathname === "/presentation" });
   if (presentation) return <>{children}</>;
   return (
@@ -34,6 +36,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link to="/presentation" search={{ slide: 1, print: false }} className="text-muted-foreground hover:text-airlock">Deck</Link>
             <span className="hidden lg:inline">Demo Corp</span>
             <span className="rounded-sm border px-2 py-1">Synthetic data</span>
+            <Link to="/auth" className="text-muted-foreground hover:text-airlock">{access.signedIn ? "Account" : "Sign in"}</Link>
           </div>
           <nav aria-label="Main navigation" className="order-last flex w-full items-stretch justify-between md:order-none md:w-auto md:justify-start md:gap-6">
             {nav.map(({ to, label }) => (

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { formatIST } from "@/lib/format";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,9 @@ import { getIncident, runTriage, approveIncident, updateAssetValue } from "@/lib
 import { judgeCanary, type Canary } from "@/lib/canary";
 import { StatusBadge, severityTone, type Tone } from "@/components/StatusBadge";
 import { cn } from "@/lib/utils";
+import { useAccess } from "@/components/AccessProvider";
+import { OperationNotice } from "@/components/OperationNotice";
+import { getIncidentAudit } from "@/lib/access.functions";
 
 const incidentQuery = (id: string) => queryOptions({ queryKey: ["incident", id], queryFn: () => getIncident({ data: { id } }) });
 
@@ -76,21 +79,25 @@ function Card({ title, aside, children, className }: { title: string; aside?: Re
 }
 
 function IncidentPage() {
+  const access = useAccess();
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(incidentQuery(id));
   const qc = useQueryClient();
   const run = useServerFn(runTriage);
   const approve = useServerFn(approveIncident);
   const saveAsset = useServerFn(updateAssetValue);
+  const loadAudit = useServerFn(getIncidentAudit);
+  const audit = useQuery({ queryKey: ["incident-audit", id], queryFn: () => loadAudit({ data: { id } }), enabled: access.allowed, retry: false });
   const [mode, setMode] = useState<"airlock" | "naive">("airlock");
   const [busy, setBusy] = useState(false);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
   const [editing, setEditing] = useState(false);
   const [assetDraft, setAssetDraft] = useState("");
 
-  const alert = data!.alert;
+  if (!data) throw new Error("Incident not found.");
+  const alert = data.alert;
   const asset = alert.asset as unknown as { id: string; name: string; asset_type: string; asset_value: number; criticality: string };
-  const inc = data!.incident;
+  const inc = data.incident;
   const canary: Canary | null = alert.canary_type && alert.canary_value ? { type: alert.canary_type as Canary["type"], value: alert.canary_value } : null;
 
   const side = mode === "airlock" ? inc?.airlock_output : inc?.naive_output;
@@ -104,6 +111,7 @@ function IncidentPage() {
   const quarantined = inc?.scan_summary?.filter((s) => s.verdict === "injection") ?? [];
 
   async function doRun() {
+    if (!access.allowed) return;
     setBusy(true);
     try {
       const r = await run({ data: { id } });
@@ -119,9 +127,11 @@ function IncidentPage() {
   }
 
   async function doApprove() {
+    if (!access.allowed) return;
     try {
       await approve({ data: { id } });
-      toast.success("Playbook approved — queued for execution by analyst");
+      toast.success("Recommendation approved — no action executed");
+      await qc.invalidateQueries({ queryKey: ["incident-audit", id] });
       await qc.invalidateQueries({ queryKey: ["incident", id] });
       qc.invalidateQueries({ queryKey: ["alerts"] });
     } catch (e) {
@@ -130,6 +140,7 @@ function IncidentPage() {
   }
 
   async function doSaveAsset() {
+    if (!access.allowed) return;
     const v = Number(assetDraft.replace(/[^\d.]/g, ""));
     if (!Number.isFinite(v)) return;
     try {
@@ -162,6 +173,7 @@ function IncidentPage() {
         <ArrowLeft className="h-3 w-3" /> Alert queue
       </Link>
 
+      <OperationNotice />
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-6 border-b pb-6">
         <div className="min-w-0">
@@ -180,7 +192,7 @@ function IncidentPage() {
                 <span className="font-mono text-sm">{Math.round(out.confidence * 100)}% <span className="text-muted-foreground">conf.</span></span>
               </>
             )}
-            <Button onClick={doRun} disabled={busy} className="inline-flex items-center gap-2 rounded-sm bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
+            <Button onClick={doRun} disabled={!access.allowed || busy} className="inline-flex items-center gap-2 rounded-sm bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               {busy ? "Triaging both modes…" : inc ? "Re-run Triage" : "Run Triage"}
             </Button>
@@ -291,12 +303,12 @@ function IncidentPage() {
                   </ul>
                   <Button
                     onClick={doApprove}
-                    disabled={inc.status === "Approved" || mode === "naive"}
+                    disabled={!access.allowed || inc.status === "Approved" || mode === "naive"}
                     title={mode === "naive" ? "Switch to Airlock Protected to approve" : undefined}
                     className="mt-4 inline-flex items-center gap-2 rounded-sm border border-sealed px-3 py-1.5 text-sm font-semibold text-sealed hover:bg-secondary disabled:opacity-40"
                   >
                     <CheckCircle2 className="h-4 w-4" />
-                    {inc.status === "Approved" ? `Approved ${inc.approved_at ? formatIST(inc.approved_at) : ""}` : "Approve & Execute"}
+                    {inc.status === "Approved" ? `Approved ${inc.approved_at ? formatIST(inc.approved_at) : ""}` : "Approve recommendation"}
                   </Button>
                 </Card>
               </>
@@ -315,12 +327,12 @@ function IncidentPage() {
                       {editing ? (
                         <>
                           <input autoFocus value={assetDraft} onChange={(e) => setAssetDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && doSaveAsset()} className="log-well w-28 px-1 py-0.5 text-right" />
-                          <Button onClick={doSaveAsset} className="text-airlock">save</Button>
+                          <Button disabled={!access.allowed} onClick={doSaveAsset} className="text-airlock">save</Button>
                         </>
                       ) : (
                         <>
                           {inr(Number(asset.asset_value))}
-                          <Button onClick={() => { setAssetDraft(String(asset.asset_value)); setEditing(true); }} aria-label="Edit asset value" className="text-muted-foreground hover:text-airlock">
+                          <Button disabled={!access.allowed} onClick={() => { setAssetDraft(String(asset.asset_value)); setEditing(true); }} aria-label="Edit asset value" className="text-muted-foreground hover:text-airlock">
                             <Pencil className="h-3 w-3" />
                           </Button>
                         </>
@@ -347,6 +359,11 @@ function IncidentPage() {
               </Card>
             )}
 
+            {access.allowed && (
+              <Card title="Approval records" className="border-l-border">
+                {audit.data?.length ? <ul className="space-y-3">{audit.data.map((entry) => <li key={entry.id} className="text-xs"><p>{entry.action}</p><p className="text-muted-foreground">{formatIST(entry.created_at)}</p><p className="break-all font-mono text-muted-foreground">Actor {entry.actor_id}</p></li>)}</ul> : <p className="text-sm text-muted-foreground">No approvals recorded yet.</p>}
+              </Card>
+            )}
             {inc && (
               <Card title="Canary judge" className={verdicts.naive ? "border-l-hostile" : "border-l-border"}>
                 {canary ? (

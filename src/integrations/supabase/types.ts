@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage_windows: {
+        Row: {
+          reserved_calls: number
+          user_id: string
+          window_kind: string
+          window_start: string
+        }
+        Insert: {
+          reserved_calls?: number
+          user_id: string
+          window_kind: string
+          window_start: string
+        }
+        Update: {
+          reserved_calls?: number
+          user_id?: string
+          window_kind?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       airlock_events: {
         Row: {
           alert_id: string | null
@@ -273,6 +294,8 @@ export type Database = {
           id: string
           metrics: Json | null
           model: string
+          owner_id: string | null
+          public_demo: boolean
           sample_size: number
           started_at: string
           status: string
@@ -286,6 +309,8 @@ export type Database = {
           id?: string
           metrics?: Json | null
           model: string
+          owner_id?: string | null
+          public_demo?: boolean
           sample_size?: number
           started_at?: string
           status?: string
@@ -299,10 +324,30 @@ export type Database = {
           id?: string
           metrics?: Json | null
           model?: string
+          owner_id?: string | null
+          public_demo?: boolean
           sample_size?: number
           started_at?: string
           status?: string
           suite_type?: string
+        }
+        Relationships: []
+      }
+      demo_publications: {
+        Row: {
+          key: string
+          payload: Json
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          payload: Json
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          payload?: Json
+          updated_at?: string
         }
         Relationships: []
       }
@@ -356,12 +401,71 @@ export type Database = {
           },
         ]
       }
+      operation_audit: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          details: Json
+          id: string
+          target: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          details?: Json
+          id?: string
+          target: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          target?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      approve_incident_audited: { Args: { p_id: string }; Returns: string }
+      create_owned_benchmark: {
+        Args: { p_model: string; p_size: number; p_suite: string }
+        Returns: string
+      }
+      is_logairlock_operator: { Args: never; Returns: boolean }
+      refresh_demo_publications: { Args: never; Returns: undefined }
+      reserve_ai_usage: {
+        Args: { p_action: string; p_calls: number }
+        Returns: undefined
+      }
+      update_asset_value_audited: {
+        Args: { p_id: string; p_value: number }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppShell } from "@/components/AppShell";
 import { Toaster } from "@/components/ui/sonner";
+import { AccessProvider } from "@/components/AccessProvider";
 
 function NotFoundComponent() {
   return (
@@ -122,9 +123,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell>
-        <Outlet />
-      </AppShell>
+      <AccessProvider>
+        <AppShell><Outlet /></AppShell>
+      </AccessProvider>
       <Toaster theme="dark" />
     </QueryClientProvider>
   );
