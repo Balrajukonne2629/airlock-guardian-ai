@@ -9,7 +9,7 @@
 - [x] Verify tests, live navigation, and narrow-screen layout; stop for review.
 
 # Project presentation
-- [ ] Create a branded deck with presenter notes, stored proof, and demo visuals.
-- [ ] Add slide navigation, fullscreen presenting, and PDF print view.
-- [ ] Verify every slide and presentation controls; stop for review.
-- [ ] Create the presentation in the selected Google Slides connection.
+- [x] Create a branded deck with presenter notes, stored proof, and demo visuals.
+- [x] Add slide navigation, fullscreen presenting, and PDF print view.
+- [x] Verify every slide and presentation controls; stop for review.
+- [x] Create the presentation in the selected Google Slides connection.
