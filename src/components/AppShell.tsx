@@ -31,7 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="text-base font-semibold">LogAirlock</span>
           </Link>
           <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground md:order-last">
-            <Link to="/presentation" className="text-muted-foreground hover:text-airlock">Deck</Link>
+            <Link to="/presentation" search={{ slide: 1, print: false }} className="text-muted-foreground hover:text-airlock">Deck</Link>
             <span className="hidden lg:inline">Demo Corp</span>
             <span className="rounded-sm border px-2 py-1">Synthetic data</span>
           </div>

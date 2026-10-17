@@ -39,6 +39,7 @@ function ProofBlock({ title, proof }: { title: string; proof: Proof }) {
 
 export function DeckSlide({ index, proof }: { index: number; proof: { quick: Proof; heldout: Proof } }) {
   const slide = deckSlides[index] ?? deckSlides[0];
+  if (!slide) return null;
   return <article className="slide-content" aria-label={`Slide ${index + 1}: ${slide.title}`}>
     <header className="deck-slide-header"><span>LogAirlock</span><span>Project presentation / Synthetic data</span></header>
     <div className="deck-slide-body">

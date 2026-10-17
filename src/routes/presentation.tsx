@@ -9,7 +9,7 @@ import { getOverviewProof } from "@/lib/overview.functions";
 
 const proofQuery = queryOptions({ queryKey: ["overview-proof"], queryFn: () => getOverviewProof(), staleTime: 0 });
 export const Route = createFileRoute("/presentation")({
-  validateSearch: (search: Record<string, unknown>) => ({ slide: Math.max(1, Math.min(deckSlides.length, Number(search.slide) || 1)), print: search.print === true || search.print === "true" }),
+  validateSearch: (search: Record<string, unknown>) => ({ slide: Math.max(1, Math.min(deckSlides.length, Number(search['slide']) || 1)), print: search['print'] === true || search['print'] === "true" }),
   head: () => ({ meta: [
     { title: "LogAirlock — Project Presentation" },
     { name: "description", content: "Present LogAirlock’s prompt-injection containment, analyst workflow, stored benchmark evidence and honest limitations." },
