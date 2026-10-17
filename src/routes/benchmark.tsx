@@ -10,6 +10,8 @@ import { BENCHMARK_MODEL_OPTIONS, finalizeRun, getRunResults, listRuns, runBatch
 import { computeMetrics, describe, pct, type Ratio, type Metrics } from "@/lib/metrics";
 import { cn } from "@/lib/utils";
 import { formatIST, outcomeTone, type OutcomeKind } from "@/lib/format";
+import { useAccess } from "@/components/AccessProvider";
+import { OperationNotice } from "@/components/OperationNotice";
 
 const runsQuery = queryOptions({ queryKey: ["runs"], queryFn: () => listRuns() });
 const resultsQuery = (id: string) => queryOptions({ queryKey: ["run", id], queryFn: () => getRunResults({ data: { runId: id } }) });
@@ -60,6 +62,7 @@ function RunMeta({ run, m }: { run: { suite_type: string; sample_size: number; m
 }
 
 function BenchmarkPage() {
+  const access = useAccess();
   const { data: runs } = useSuspenseQuery(runsQuery);
   const qc = useQueryClient();
   const start = useServerFn(startRun);
@@ -86,6 +89,7 @@ function BenchmarkPage() {
   }, [progress]);
 
   async function run(suite: Suite) {
+    if (!access.allowed) return;
     stopRef.current = false;
     const t0 = Date.now();
     setNow(t0);
@@ -139,6 +143,7 @@ function BenchmarkPage() {
         </label>
       </div>
 
+      <OperationNotice />
       <section className="border-y bg-card">
         <div className="flex flex-wrap items-center gap-2 p-3">
           {(["quick", "full", "heldout"] as Suite[]).map((s) => (
@@ -146,7 +151,7 @@ function BenchmarkPage() {
               variant={s === "quick" ? "default" : "outline"}
               key={s}
               onClick={() => run(s)}
-              disabled={!!progress}
+              disabled={!access.allowed || !!progress}
               className={cn(
                 "inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-semibold disabled:opacity-40",
                 s === "quick" ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-airlock text-airlock hover:bg-secondary",
