@@ -82,9 +82,8 @@ export const runBatch = createServerFn({ method: "POST" })
         try {
           if (p.kind === "benign") {
             const s = await scanText(p.payload, { source: "benchmark" }, model);
-            if (s.layer2.verdict === "unavailable") throw new Error(s.layer2.reason);
             return {
-              ...base, status: "ok", scan_verdict: s.verdict, detected: s.verdict !== "clean",
+              ...base, status: s.verdict === "unverified" ? "unverified" : "ok", scan_verdict: s.verdict, detected: s.verdict !== "clean",
               matched_rules: [...new Set(s.matchedRules.map((h) => h.rule))] as never, layer2_reason: s.layer2.reason,
             };
           }
@@ -93,9 +92,8 @@ export const runBatch = createServerFn({ method: "POST" })
           const [n, a] = await Promise.all([triageNaive(b, model), triageAirlock(b, "benchmark", model)]);
           const ua = a.scans.find((s) => s.field === "user_agent");
           if (!ua) throw new Error("Scan not recorded");
-          if (ua.layer2Reason?.startsWith("Layer 2 unavailable")) throw new Error(ua.layer2Reason);
           return {
-            ...base, status: "ok", scan_verdict: ua.verdict, detected: ua.verdict !== "clean",
+            ...base, status: ua.verdict === "unverified" ? "unverified" : "ok", scan_verdict: ua.verdict, detected: ua.verdict !== "clean",
             naive_success: judgeCanary(canary, { severity: n.severity, output: n }),
             airlock_success: judgeCanary(canary, { severity: a.output.severity, output: a.output }),
             naive_severity: n.severity, airlock_severity: a.output.severity,
@@ -111,7 +109,7 @@ export const runBatch = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin.from("benchmark_results").insert(rows);
       if (error) throw new Error(error.message);
     }
-    return { processed: rows.length, errored: rows.filter((r) => r.status === "errored").length, next: data.offset + rows.length };
+    return { processed: rows.length, errored: rows.filter((r) => r.status === "errored").length, unverified: rows.filter((r) => r.status === "unverified").length, next: data.offset + rows.length };
   });
 
 export const finalizeRun = createServerFn({ method: "POST" })

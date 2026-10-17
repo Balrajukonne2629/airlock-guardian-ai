@@ -246,8 +246,8 @@ function IncidentPage() {
                   <li key={s.field} className="py-2 first:pt-0 last:pb-0">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs text-muted-foreground">{s.field}</span>
-                      <StatusBadge tone={s.verdict === "injection" ? "hostile" : s.verdict === "suspicious" ? "warning" : "sealed"}>
-                        {s.verdict === "injection" ? "Quarantined" : s.verdict}
+                      <StatusBadge tone={s.verdict === "injection" ? "hostile" : s.verdict === "suspicious" || s.verdict === "unverified" ? "warning" : "sealed"}>
+                        {s.verdict === "injection" ? "Quarantined" : s.verdict === "unverified" ? "Unverified: AI check unavailable" : s.verdict}
                       </StatusBadge>
                     </div>
                     {s.verdict !== "clean" && (

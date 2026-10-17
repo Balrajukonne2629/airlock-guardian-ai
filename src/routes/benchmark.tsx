@@ -55,7 +55,7 @@ function RunMeta({ run, m }: { run: { suite_type: string; sample_size: number; m
   return (
     <span className="text-xs text-muted-foreground">
       {SUITE_LABEL[run.suite_type]} · n={m.overall.payloads} attacks + {m.benign.total} benign · {run.model} · {formatIST(run.started_at)} · {run.elapsed_seconds ?? "—"}s ·{" "}
-      <span className={m.errored ? "text-warning" : ""}>{m.errored} errored</span>
+      <span className={m.errored ? "text-warning" : ""}>{m.errored} errored</span> · <span className={m.unverified ? "text-warning" : ""}>{m.unverified ?? 0} unverified (AI check unavailable)</span>
       {run.status === "aborted" && <span className="text-warning"> · stopped early</span>}
     </span>
   );
@@ -208,7 +208,7 @@ function BenchmarkPage() {
                   {m.categories.map((c) => (
                     <tr key={c.category} className="border-b">
                       <td className="px-3 py-2">{c.category}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{c.payloads}{c.errored ? <span className="text-warning"> ({c.errored} err)</span> : null}</td>
+                      <td className="px-3 py-2 font-mono text-xs">{c.payloads}{c.errored ? <span className="text-warning"> ({c.errored} err)</span> : null}{c.unverified ? <span className="text-warning"> ({c.unverified} unverified)</span> : null}</td>
                       <td className="px-3 py-2"><R r={c.asrNaive} kind="asr" /></td>
                       <td className="px-3 py-2"><R r={c.asrAirlock} kind="asr" /></td>
                       <td className="px-3 py-2"><R r={c.detected} kind="det" /></td>
@@ -225,7 +225,7 @@ function BenchmarkPage() {
                   </tr>
                   <tr className="border-b">
                     <td className="px-3 py-2">False-positive rate (benign)</td>
-                    <td className="px-3 py-2 font-mono text-xs">{m.benign.total}{m.benign.errored ? <span className="text-warning"> ({m.benign.errored} err)</span> : null}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{m.benign.total}{m.benign.errored ? <span className="text-warning"> ({m.benign.errored} err)</span> : null}{m.benign.unverified ? <span className="text-warning"> ({m.benign.unverified} unverified)</span> : null}</td>
                     <td className="px-3 py-2 text-xs text-muted-foreground" colSpan={2}>scan only, no triage</td>
                     <td className="px-3 py-2"><R r={m.benign.fp} kind="fp" /></td>
                     <td />
