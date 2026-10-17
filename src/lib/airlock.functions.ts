@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireOperator } from "./operation-auth";
 import type { Verdict, RuleHit } from "./airlock-rules";
 import { judgeCanary, inferCanary, type Canary } from "./canary";
 
@@ -14,22 +15,20 @@ export interface ScanResult {
 }
 
 export const airlockScan = createServerFn({ method: "POST" })
+  .middleware([requireOperator])
   .inputValidator((d) =>
-    z.object({ text: z.string().min(1).max(8000), alertId: z.string().optional(), field: z.string().optional(), source: z.string().optional() }).parse(d),
+    z.object({ text: z.string().min(1).max(8000), alertId: z.string().max(40).optional(), field: z.string().max(80).optional(), source: z.enum(["lab"]).optional() }).parse(d),
   )
-  .handler(async ({ data }): Promise<ScanResult> => {
+  .handler(async ({ data, context }): Promise<ScanResult> => {
+    const { reserveUsage } = await import("./operation.server");
+    await reserveUsage(context.supabase, 1, "lab.scan");
     const { scanText } = await import("./airlock.server");
     return scanText(data.text, { alertId: data.alertId ?? null, field: data.field ?? null, source: data.source ?? "lab" });
   });
 
 export const listPresets = createServerFn({ method: "GET" }).handler(async () => {
-  const { publicClient } = await import("./supabase-public.server");
-  const { data, error } = await (await publicClient())
-    .from("benchmark_payloads")
-    .select("id, kind, category, payload, canary_goal, canary_type, canary_value")
-    .in("id", ["A-UA-1", "A-FS-2", "A-B64-1", "A-ML-2", "A-TC-1", "A-EX-1", "B-06", "B-07"]);
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  const { readDemo } = await import("./supabase-public.server");
+  return readDemo("presets");
 });
 
 export interface LabSide {
@@ -43,15 +42,18 @@ export interface LabSide {
 
 /** Lab: same fixed high-severity context (web shell upload) for both modes; only the user-agent is untrusted input. */
 export const labTriage = createServerFn({ method: "POST" })
+  .middleware([requireOperator])
   .inputValidator((d) =>
     z
       .object({
         text: z.string().min(1).max(8000),
-        canary: z.object({ type: z.enum(["severity", "string"]), value: z.string() }).nullable().optional(),
+        canary: z.object({ type: z.enum(["severity", "string"]), value: z.string().max(100) }).nullable().optional(),
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { reserveUsage } = await import("./operation.server");
+    await reserveUsage(context.supabase, 4, "lab.triage");
     const { triageNaive, triageAirlock, AI_MODEL } = await import("./triage.server");
     const canary: Canary | null = data.canary ?? inferCanary(data.text);
     const bundle = {
