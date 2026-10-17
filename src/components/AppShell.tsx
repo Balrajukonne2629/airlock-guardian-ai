@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 function AirlockMark() {
@@ -20,6 +20,8 @@ const nav = [
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const presentation = useRouterState({ select: (state) => state.location.pathname === "/presentation" });
+  if (presentation) return <>{children}</>;
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-20 border-b bg-background">
@@ -29,6 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="text-base font-semibold">LogAirlock</span>
           </Link>
           <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground md:order-last">
+            <Link to="/presentation" search={{ slide: 1, print: false }} className="text-muted-foreground hover:text-airlock">Deck</Link>
             <span className="hidden lg:inline">Demo Corp</span>
             <span className="rounded-sm border px-2 py-1">Synthetic data</span>
           </div>
