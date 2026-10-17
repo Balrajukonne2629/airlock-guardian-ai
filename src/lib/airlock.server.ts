@@ -24,7 +24,7 @@ Give a reason of at most 20 words. Respond by calling classify.`;
 
 export async function scanText(
   text: string,
-  log: { alertId?: string | null; field?: string | null; source: string; visitorHash?: string },
+  log: { alertId?: string | null; field?: string | null; source: string; visitorHash?: string | undefined },
   model: string = AI_MODEL,
 ): Promise<ScanResult> {
   const hits = scanLayer1(text);

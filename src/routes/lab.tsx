@@ -21,6 +21,8 @@ const GUEST_SAMPLES = [
   { label: "Harmless line", text: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 Version/17.4 Safari/605.1.15" },
 ];
 
+type AI_MODEL_T = "google/gemini-3-flash-preview";
+
 function guestToken() {
   let t = localStorage.getItem("logairlock-guest-token");
   if (!t) { t = crypto.randomUUID(); localStorage.setItem("logairlock-guest-token", t); }
@@ -117,7 +119,7 @@ function LabPage() {
     try {
       const r = await gRun({ data: { text, token: guestToken() } });
       setResult(r.scan); setRunsLeft(r.runsLeft); setPaused(r.paused?.message ?? null);
-      if (r.triage) setTri({ ...r.triage, airlockVerdict: r.scan.verdict });
+      if (r.triage) setTri({ ...r.triage, model: r.triage.model as AI_MODEL_T, airlockVerdict: r.scan.verdict });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Guest run failed");
     } finally { setBusy(false); }
