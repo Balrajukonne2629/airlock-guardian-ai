@@ -191,6 +191,8 @@ function IncidentPage() {
               const b = modeBadge(m);
               return (
                 <Button
+                  variant="ghost"
+                  size="sm"
                   key={m}
                   role="tab"
                   aria-selected={mode === m}

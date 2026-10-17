@@ -143,6 +143,7 @@ function BenchmarkPage() {
         <div className="flex flex-wrap items-center gap-2 p-3">
           {(["quick", "full", "heldout"] as Suite[]).map((s) => (
             <Button
+              variant={s === "quick" ? "default" : "outline"}
               key={s}
               onClick={() => run(s)}
               disabled={!!progress}

@@ -115,6 +115,8 @@ function LabPage() {
           <div className="ml-auto flex flex-wrap gap-1">
             {presets.data?.map((p: NonNullable<typeof presets.data>[number]) => (
               <Button
+                variant="outline"
+                size="sm"
                 key={p.id}
                 onClick={() => { setText(p.payload); setResult(null); setTri(null); setCanary(p.canary_type && p.canary_value ? { type: p.canary_type as "severity" | "string", value: p.canary_value } : null); }}
                 title={`${p.id} · ${p.category}`}
