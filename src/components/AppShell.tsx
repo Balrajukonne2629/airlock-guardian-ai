@@ -22,44 +22,37 @@ const nav = [
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Top rail — one continuous instrument strip */}
       <header className="sticky top-0 z-20 border-b bg-background">
-        <div className="flex h-12 items-stretch">
-          <Link to="/overview" className="flex items-center gap-2.5 border-r px-4">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-x-8 px-5 md:px-8">
+          <Link to="/overview" className="flex h-16 shrink-0 items-center gap-2.5">
             <AirlockMark />
-            <span className="font-mono text-sm font-semibold tracking-[0.18em]">LOGAIRLOCK</span>
+            <span className="text-base font-semibold">LogAirlock</span>
           </Link>
-          <nav className="flex items-stretch overflow-x-auto">
+          <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground md:order-last">
+            <span className="hidden lg:inline">Demo Corp</span>
+            <span className="rounded-sm border px-2 py-1">Synthetic data</span>
+          </div>
+          <nav aria-label="Main navigation" className="order-last flex w-full items-stretch justify-between md:order-none md:w-auto md:justify-start md:gap-6">
             {nav.map(({ to, label }) => (
               <Link
                 key={to}
                 to={to}
                 activeOptions={{ exact: to === "/" }}
-                className="flex items-center border-r px-4 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                activeProps={{ className: "!text-airlock bg-secondary shadow-[inset_0_-2px_0_0_var(--airlock)]" }}
+                className="flex h-12 items-center border-b-2 border-transparent px-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:h-16"
+                activeProps={{ className: "!text-airlock !border-airlock" }}
               >
                 {label}
               </Link>
             ))}
           </nav>
-          <div className="ml-auto hidden items-center gap-3 border-l px-4 sm:flex">
-            <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-sealed animate-lamp" />
-              Demo Corp / SOC-IN-01
-            </span>
-            <span className="tone-warning border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.18em]">
-              Synthetic data
-            </span>
-          </div>
         </div>
       </header>
 
-      <main className="bg-hairline-grid flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+      <main className="flex-1 px-5 py-8 md:px-8 md:py-10">{children}</main>
 
       <footer className="border-t px-4 py-3 md:px-8">
-        <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
           <span>Triage alerts. Never take orders from logs.</span>
-          <span className="sm:hidden tone-warning border px-1.5 py-0.5">Synthetic data</span>
           <span className="hidden sm:inline">Airlock containment boundary · v0.4</span>
         </div>
       </footer>
